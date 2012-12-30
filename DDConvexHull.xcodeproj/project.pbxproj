@@ -6,8 +6,17 @@
 	objectVersion = 46;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		6D0D36BC1690CBCE0007D530 /* DDConvexHullNode.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6D0D36BA1690CBCE0007D530 /* DDConvexHullNode.cpp */; };
+		6D0D36BD1690CBCE0007D530 /* DDConvexHullNode.h in Headers */ = {isa = PBXBuildFile; fileRef = 6D0D36BB1690CBCE0007D530 /* DDConvexHullNode.h */; };
+		6D0D36C21690D1F70007D530 /* DDConvexHullPlugin.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6D0D36C11690D1F70007D530 /* DDConvexHullPlugin.cpp */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
-		6D0D36AF1690C86D0007D530 /* libDDConvexHull.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libDDConvexHull.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
+		6D0D36AF1690C86D0007D530 /* DDConvexHull.bundle */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = DDConvexHull.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
+		6D0D36BA1690CBCE0007D530 /* DDConvexHullNode.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DDConvexHullNode.cpp; sourceTree = "<group>"; };
+		6D0D36BB1690CBCE0007D530 /* DDConvexHullNode.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DDConvexHullNode.h; sourceTree = "<group>"; };
+		6D0D36C11690D1F70007D530 /* DDConvexHullPlugin.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DDConvexHullPlugin.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -24,6 +33,7 @@
 		6D0D36A41690C86D0007D530 = {
 			isa = PBXGroup;
 			children = (
+				6D0D36B91690CBB50007D530 /* Source */,
 				6D0D36B01690C86D0007D530 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -31,9 +41,19 @@
 		6D0D36B01690C86D0007D530 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				6D0D36AF1690C86D0007D530 /* libDDConvexHull.dylib */,
+				6D0D36AF1690C86D0007D530 /* DDConvexHull.bundle */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		6D0D36B91690CBB50007D530 /* Source */ = {
+			isa = PBXGroup;
+			children = (
+				6D0D36BA1690CBCE0007D530 /* DDConvexHullNode.cpp */,
+				6D0D36BB1690CBCE0007D530 /* DDConvexHullNode.h */,
+				6D0D36C11690D1F70007D530 /* DDConvexHullPlugin.cpp */,
+			);
+			name = Source;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -43,6 +63,7 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6D0D36BD1690CBCE0007D530 /* DDConvexHullNode.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -63,7 +84,7 @@
 			);
 			name = DDConvexHull;
 			productName = DDConvexHull;
-			productReference = 6D0D36AF1690C86D0007D530 /* libDDConvexHull.dylib */;
+			productReference = 6D0D36AF1690C86D0007D530 /* DDConvexHull.bundle */;
 			productType = "com.apple.product-type.library.dynamic";
 		};
 /* End PBXNativeTarget section */
@@ -97,6 +118,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6D0D36BC1690CBCE0007D530 /* DDConvexHullNode.cpp in Sources */,
+				6D0D36C21690D1F70007D530 /* DDConvexHullPlugin.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -107,27 +130,40 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				EXECUTABLE_EXTENSION = "";
+				EXECUTABLE_SUFFIX = "";
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
-					"$(inherited)",
+					OSMac_,
+					MAC_PLUGIN,
+					_BOOL,
+					REQUIRE_IOSTREAM,
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_MASTER_OBJECT_FILE = YES;
+				HEADER_SEARCH_PATHS = (
+					.,
+					./StanHull,
+					/Applications/Autodesk/maya2013/devkit/include,
+				);
+				MACH_O_TYPE = mh_bundle;
 				MACOSX_DEPLOYMENT_TARGET = 10.8;
 				ONLY_ACTIVE_ARCH = YES;
+				OTHER_LDFLAGS = "";
 				SDKROOT = macosx;
 			};
 			name = Debug;
@@ -136,20 +172,36 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_WARN_EMPTY_BODY = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				EXECUTABLE_EXTENSION = "";
+				EXECUTABLE_SUFFIX = "";
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					OSMac_,
+					MAC_PLUGIN,
+					_BOOL,
+					REQUIRE_IOSTREAM,
+				);
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_MASTER_OBJECT_FILE = YES;
+				HEADER_SEARCH_PATHS = (
+					.,
+					./StanHull,
+					/Applications/Autodesk/maya2013/devkit/include,
+				);
+				MACH_O_TYPE = mh_bundle;
 				MACOSX_DEPLOYMENT_TARGET = 10.8;
+				OTHER_LDFLAGS = "";
 				SDKROOT = macosx;
 			};
 			name = Release;
@@ -157,7 +209,22 @@
 		6D0D36B41690C86D0007D530 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				EXECUTABLE_PREFIX = lib;
+				DYLIB_COMPATIBILITY_VERSION = "";
+				DYLIB_CURRENT_VERSION = "";
+				EXECUTABLE_EXTENSION = bundle;
+				EXECUTABLE_PREFIX = "";
+				EXECUTABLE_SUFFIX = .bundle;
+				LIBRARY_SEARCH_PATHS = (
+					.,
+					/Applications/Autodesk/maya2013/Maya.app/Contents/MacOS,
+				);
+				OTHER_LDFLAGS = (
+					"-Wl,-executable_path,/Applications/Autodesk/maya2013/Maya.app/Contents/MacOS",
+					"-Wl,-exported_symbol,__Z16initializePlugin7MObject",
+					"-Wl,-exported_symbol,__Z18uninitializePlugin7MObject",
+					"-lOpenMaya",
+					"-lFoundation",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -165,7 +232,23 @@
 		6D0D36B51690C86D0007D530 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				EXECUTABLE_PREFIX = lib;
+				DYLIB_COMPATIBILITY_VERSION = "";
+				DYLIB_CURRENT_VERSION = "";
+				EXECUTABLE_EXTENSION = bundle;
+				EXECUTABLE_PREFIX = "";
+				EXECUTABLE_SUFFIX = .bundle;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				LIBRARY_SEARCH_PATHS = (
+					.,
+					/Applications/Autodesk/maya2013/Maya.app/Contents/MacOS,
+				);
+				OTHER_LDFLAGS = (
+					"-Wl,-executable_path,/Applications/Autodesk/maya2013/Maya.app/Contents/MacOS",
+					"-Wl,-exported_symbol,__Z16initializePlugin7MObject",
+					"-Wl,-exported_symbol,__Z18uninitializePlugin7MObject",
+					"-lOpenMaya",
+					"-lFoundation",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
