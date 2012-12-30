@@ -31,6 +31,10 @@ public:
     
     // Node id for this guy
     static MTypeId id;
+    
+    // Attribute object handles
+    static MObject aInputPolymesh;
+    static MObject aOutput;
 };
 
 

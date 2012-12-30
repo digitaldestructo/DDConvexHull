@@ -10,6 +10,8 @@
 		6D0D36BC1690CBCE0007D530 /* DDConvexHullNode.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6D0D36BA1690CBCE0007D530 /* DDConvexHullNode.cpp */; };
 		6D0D36BD1690CBCE0007D530 /* DDConvexHullNode.h in Headers */ = {isa = PBXBuildFile; fileRef = 6D0D36BB1690CBCE0007D530 /* DDConvexHullNode.h */; };
 		6D0D36C21690D1F70007D530 /* DDConvexHullPlugin.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6D0D36C11690D1F70007D530 /* DDConvexHullPlugin.cpp */; };
+		6D0D36C71690DDF90007D530 /* hull.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6D0D36C41690DDF90007D530 /* hull.cpp */; };
+		6D0D36C81690DDF90007D530 /* hull.h in Headers */ = {isa = PBXBuildFile; fileRef = 6D0D36C51690DDF90007D530 /* hull.h */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -17,6 +19,9 @@
 		6D0D36BA1690CBCE0007D530 /* DDConvexHullNode.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DDConvexHullNode.cpp; sourceTree = "<group>"; };
 		6D0D36BB1690CBCE0007D530 /* DDConvexHullNode.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DDConvexHullNode.h; sourceTree = "<group>"; };
 		6D0D36C11690D1F70007D530 /* DDConvexHullPlugin.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DDConvexHullPlugin.cpp; sourceTree = "<group>"; };
+		6D0D36C41690DDF90007D530 /* hull.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = hull.cpp; path = StanHull/hull.cpp; sourceTree = "<group>"; };
+		6D0D36C51690DDF90007D530 /* hull.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = hull.h; path = StanHull/hull.h; sourceTree = "<group>"; };
+		6D0D36C61690DDF90007D530 /* readme.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = readme.txt; path = StanHull/readme.txt; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -49,11 +54,22 @@
 		6D0D36B91690CBB50007D530 /* Source */ = {
 			isa = PBXGroup;
 			children = (
+				6D0D36C31690DDE30007D530 /* StanHull */,
 				6D0D36BA1690CBCE0007D530 /* DDConvexHullNode.cpp */,
 				6D0D36BB1690CBCE0007D530 /* DDConvexHullNode.h */,
 				6D0D36C11690D1F70007D530 /* DDConvexHullPlugin.cpp */,
 			);
 			name = Source;
+			sourceTree = "<group>";
+		};
+		6D0D36C31690DDE30007D530 /* StanHull */ = {
+			isa = PBXGroup;
+			children = (
+				6D0D36C41690DDF90007D530 /* hull.cpp */,
+				6D0D36C51690DDF90007D530 /* hull.h */,
+				6D0D36C61690DDF90007D530 /* readme.txt */,
+			);
+			name = StanHull;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -64,6 +80,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				6D0D36BD1690CBCE0007D530 /* DDConvexHullNode.h in Headers */,
+				6D0D36C81690DDF90007D530 /* hull.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -120,6 +137,7 @@
 			files = (
 				6D0D36BC1690CBCE0007D530 /* DDConvexHullNode.cpp in Sources */,
 				6D0D36C21690D1F70007D530 /* DDConvexHullPlugin.cpp in Sources */,
+				6D0D36C71690DDF90007D530 /* hull.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
