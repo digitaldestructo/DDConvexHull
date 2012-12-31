@@ -57,6 +57,10 @@
 
 */
 
+// Jtilden - on mac OSX, include string for memcpy
+#ifdef __APPLE__
+    #include <string.h>
+#endif
 
 class HullResult
 {
