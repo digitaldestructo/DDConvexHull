@@ -6,8 +6,14 @@
 #include "wavefront.h"
 #include "hull.h"
 
+// Jtilden - on mac OSX, include strings.h and redefine strnicmp
+#ifdef __APPLE__
+    #include <strings.h>
+    #define strnicmp strncasecmp
+    #define stricmp strcasecmp
+#endif
 
-void main(int argc,char **argv)
+int main(int argc,char **argv)
 {
 	if ( argc < 2 )
 	{
@@ -139,13 +145,16 @@ void main(int argc,char **argv)
       else
       {
       	printf("Failed to create convex hull.\r\n");
+        return 1;
       }
 
     }
     else
     {
     	printf("Failed to load '%s'\r\n", fname );
+        return 1;
     }
 
 	}
+    return 0;
 }
