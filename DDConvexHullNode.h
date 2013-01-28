@@ -9,8 +9,10 @@
 #ifndef __DDConvexHull__DDConvexHullNode__
 #define __DDConvexHull__DDConvexHullNode__
 
+#include "StanHull/hull.h"
 #include <maya/MPxNode.h>
 #include <maya/MTypeId.h>
+#include <maya/MFnMesh.h>
 
 class DDConvexHullNode : public MPxNode
 {
@@ -35,6 +37,9 @@ public:
     // Attribute object handles
     static MObject aInputPolymesh;
     static MObject aOutput;
+
+private:
+    HullError createConvexHull(MObject &outMesh, const MFnMesh &inMeshFn);
 };
 
 

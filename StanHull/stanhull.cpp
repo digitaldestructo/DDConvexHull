@@ -10,7 +10,7 @@
 #ifdef __APPLE__
     #include <strings.h>
     #define strnicmp strncasecmp
-    #define stricmp strcasecmp
+    #define stricmp  strcasecmp
 #endif
 
 int main(int argc,char **argv)
@@ -100,6 +100,7 @@ int main(int argc,char **argv)
         	printf("Hull contains %d triangles.\r\n", result.mNumFaces );
 
         printf("Output hull contains %d vertices.\r\n ", result.mNumOutputVertices );
+        printf("Output hull contains %d indices.\r\n", result.mNumIndices);
 
 				FILE *fph = fopen("hull.obj", "wb");
 				if ( fph )

@@ -12,7 +12,23 @@
 		6D0D36C21690D1F70007D530 /* DDConvexHullPlugin.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6D0D36C11690D1F70007D530 /* DDConvexHullPlugin.cpp */; };
 		6D0D36C71690DDF90007D530 /* hull.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6D0D36C41690DDF90007D530 /* hull.cpp */; };
 		6D0D36C81690DDF90007D530 /* hull.h in Headers */ = {isa = PBXBuildFile; fileRef = 6D0D36C51690DDF90007D530 /* hull.h */; };
+		6DECFAE81693557F0009A010 /* stanhull.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6DECFAD6169354990009A010 /* stanhull.cpp */; };
+		6DECFAE91693557F0009A010 /* wavefront.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6DECFAD7169354990009A010 /* wavefront.cpp */; };
+		6DECFAEB1693557F0009A010 /* hull.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6D0D36C41690DDF90007D530 /* hull.cpp */; };
+		6DECFAF31693AFA60009A010 /* DDConvexHullCmd.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6DECFAF11693AFA60009A010 /* DDConvexHullCmd.cpp */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		6DECFADC169354C00009A010 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		6D0D36AF1690C86D0007D530 /* DDConvexHull.bundle */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = DDConvexHull.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -22,10 +38,24 @@
 		6D0D36C41690DDF90007D530 /* hull.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = hull.cpp; path = StanHull/hull.cpp; sourceTree = "<group>"; };
 		6D0D36C51690DDF90007D530 /* hull.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = hull.h; path = StanHull/hull.h; sourceTree = "<group>"; };
 		6D0D36C61690DDF90007D530 /* readme.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = readme.txt; path = StanHull/readme.txt; sourceTree = "<group>"; };
+		6DECFAD6169354990009A010 /* stanhull.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = stanhull.cpp; path = StanHull/stanhull.cpp; sourceTree = "<group>"; };
+		6DECFAD7169354990009A010 /* wavefront.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = wavefront.cpp; path = StanHull/wavefront.cpp; sourceTree = "<group>"; };
+		6DECFAD8169354990009A010 /* wavefront.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = wavefront.h; path = StanHull/wavefront.h; sourceTree = "<group>"; };
+		6DECFADE169354C00009A010 /* StanHull */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = StanHull; sourceTree = BUILT_PRODUCTS_DIR; };
+		6DECFAF01693897D0009A010 /* DDConvexHullTest.mel */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = DDConvexHullTest.mel; path = Scripts/DDConvexHullTest.mel; sourceTree = "<group>"; };
+		6DECFAF11693AFA60009A010 /* DDConvexHullCmd.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DDConvexHullCmd.cpp; sourceTree = "<group>"; };
+		6DECFAF51693B08D0009A010 /* DDConvexHullCmd.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DDConvexHullCmd.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		6D0D36AC1690C86D0007D530 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		6DECFADB169354C00009A010 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -47,6 +77,7 @@
 			isa = PBXGroup;
 			children = (
 				6D0D36AF1690C86D0007D530 /* DDConvexHull.bundle */,
+				6DECFADE169354C00009A010 /* StanHull */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -54,10 +85,13 @@
 		6D0D36B91690CBB50007D530 /* Source */ = {
 			isa = PBXGroup;
 			children = (
+				6DECFAED1693696E0009A010 /* Scripts */,
 				6D0D36C31690DDE30007D530 /* StanHull */,
 				6D0D36BA1690CBCE0007D530 /* DDConvexHullNode.cpp */,
 				6D0D36BB1690CBCE0007D530 /* DDConvexHullNode.h */,
 				6D0D36C11690D1F70007D530 /* DDConvexHullPlugin.cpp */,
+				6DECFAF11693AFA60009A010 /* DDConvexHullCmd.cpp */,
+				6DECFAF51693B08D0009A010 /* DDConvexHullCmd.h */,
 			);
 			name = Source;
 			sourceTree = "<group>";
@@ -65,11 +99,22 @@
 		6D0D36C31690DDE30007D530 /* StanHull */ = {
 			isa = PBXGroup;
 			children = (
+				6DECFAD6169354990009A010 /* stanhull.cpp */,
+				6DECFAD7169354990009A010 /* wavefront.cpp */,
+				6DECFAD8169354990009A010 /* wavefront.h */,
 				6D0D36C41690DDF90007D530 /* hull.cpp */,
 				6D0D36C51690DDF90007D530 /* hull.h */,
 				6D0D36C61690DDF90007D530 /* readme.txt */,
 			);
 			name = StanHull;
+			sourceTree = "<group>";
+		};
+		6DECFAED1693696E0009A010 /* Scripts */ = {
+			isa = PBXGroup;
+			children = (
+				6DECFAF01693897D0009A010 /* DDConvexHullTest.mel */,
+			);
+			name = Scripts;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -104,6 +149,23 @@
 			productReference = 6D0D36AF1690C86D0007D530 /* DDConvexHull.bundle */;
 			productType = "com.apple.product-type.library.dynamic";
 		};
+		6DECFADD169354C00009A010 /* StanHull */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 6DECFAE5169354C00009A010 /* Build configuration list for PBXNativeTarget "StanHull" */;
+			buildPhases = (
+				6DECFADA169354C00009A010 /* Sources */,
+				6DECFADB169354C00009A010 /* Frameworks */,
+				6DECFADC169354C00009A010 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = StanHull;
+			productName = StanHull;
+			productReference = 6DECFADE169354C00009A010 /* StanHull */;
+			productType = "com.apple.product-type.tool";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -126,6 +188,7 @@
 			projectRoot = "";
 			targets = (
 				6D0D36AE1690C86D0007D530 /* DDConvexHull */,
+				6DECFADD169354C00009A010 /* StanHull */,
 			);
 		};
 /* End PBXProject section */
@@ -138,6 +201,17 @@
 				6D0D36BC1690CBCE0007D530 /* DDConvexHullNode.cpp in Sources */,
 				6D0D36C21690D1F70007D530 /* DDConvexHullPlugin.cpp in Sources */,
 				6D0D36C71690DDF90007D530 /* hull.cpp in Sources */,
+				6DECFAF31693AFA60009A010 /* DDConvexHullCmd.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		6DECFADA169354C00009A010 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6DECFAE81693557F0009A010 /* stanhull.cpp in Sources */,
+				6DECFAE91693557F0009A010 /* wavefront.cpp in Sources */,
+				6DECFAEB1693557F0009A010 /* hull.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -227,6 +301,7 @@
 		6D0D36B41690C86D0007D530 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
 				DYLIB_COMPATIBILITY_VERSION = "";
 				DYLIB_CURRENT_VERSION = "";
 				EXECUTABLE_EXTENSION = bundle;
@@ -250,6 +325,7 @@
 		6D0D36B51690C86D0007D530 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
 				DYLIB_COMPATIBILITY_VERSION = "";
 				DYLIB_CURRENT_VERSION = "";
 				EXECUTABLE_EXTENSION = bundle;
@@ -271,6 +347,28 @@
 			};
 			name = Release;
 		};
+		6DECFAE6169354C00009A010 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				MACH_O_TYPE = mh_execute;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		6DECFAE7169354C00009A010 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				MACH_O_TYPE = mh_execute;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -288,6 +386,15 @@
 			buildConfigurations = (
 				6D0D36B41690C86D0007D530 /* Debug */,
 				6D0D36B51690C86D0007D530 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		6DECFAE5169354C00009A010 /* Build configuration list for PBXNativeTarget "StanHull" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6DECFAE6169354C00009A010 /* Debug */,
+				6DECFAE7169354C00009A010 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 		};

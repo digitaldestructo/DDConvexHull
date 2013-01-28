@@ -8,6 +8,7 @@
 
 #include <maya/MFnPlugin.h>
 #include "DDConvexHullNode.h"
+#include "DDConvexHullCmd.h"
 
 MStatus initializePlugin(MObject obj)
 {
@@ -16,6 +17,7 @@ MStatus initializePlugin(MObject obj)
                         DDConvexHullNode::id,
                         DDConvexHullNode::creator,
                         DDConvexHullNode::initialize);
+    plugin.registerCommand("DDConvexHull", DDConvexHullCmd::creator);
     return MS::kSuccess;
 }
 
@@ -23,5 +25,6 @@ MStatus uninitializePlugin( MObject obj )
 {
     MFnPlugin plugin( obj );
     plugin.deregisterNode(DDConvexHullNode::id);
+    plugin.deregisterCommand("DDConvexHull");
     return MS::kSuccess;
 }
