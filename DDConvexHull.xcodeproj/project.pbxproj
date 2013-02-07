@@ -12,6 +12,8 @@
 		6D0D36C21690D1F70007D530 /* DDConvexHullPlugin.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6D0D36C11690D1F70007D530 /* DDConvexHullPlugin.cpp */; };
 		6D0D36C71690DDF90007D530 /* hull.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6D0D36C41690DDF90007D530 /* hull.cpp */; };
 		6D0D36C81690DDF90007D530 /* hull.h in Headers */ = {isa = PBXBuildFile; fileRef = 6D0D36C51690DDF90007D530 /* hull.h */; };
+		6D26E39316B792E2007148BB /* DDConvexHullUtils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6D26E39116B792E2007148BB /* DDConvexHullUtils.cpp */; };
+		6D26E39416B792E2007148BB /* DDConvexHullUtils.h in Headers */ = {isa = PBXBuildFile; fileRef = 6D26E39216B792E2007148BB /* DDConvexHullUtils.h */; };
 		6DECFAE81693557F0009A010 /* stanhull.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6DECFAD6169354990009A010 /* stanhull.cpp */; };
 		6DECFAE91693557F0009A010 /* wavefront.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6DECFAD7169354990009A010 /* wavefront.cpp */; };
 		6DECFAEB1693557F0009A010 /* hull.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6D0D36C41690DDF90007D530 /* hull.cpp */; };
@@ -38,6 +40,8 @@
 		6D0D36C41690DDF90007D530 /* hull.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = hull.cpp; path = StanHull/hull.cpp; sourceTree = "<group>"; };
 		6D0D36C51690DDF90007D530 /* hull.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = hull.h; path = StanHull/hull.h; sourceTree = "<group>"; };
 		6D0D36C61690DDF90007D530 /* readme.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = readme.txt; path = StanHull/readme.txt; sourceTree = "<group>"; };
+		6D26E39116B792E2007148BB /* DDConvexHullUtils.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DDConvexHullUtils.cpp; sourceTree = "<group>"; };
+		6D26E39216B792E2007148BB /* DDConvexHullUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DDConvexHullUtils.h; sourceTree = "<group>"; };
 		6DECFAD6169354990009A010 /* stanhull.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = stanhull.cpp; path = StanHull/stanhull.cpp; sourceTree = "<group>"; };
 		6DECFAD7169354990009A010 /* wavefront.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = wavefront.cpp; path = StanHull/wavefront.cpp; sourceTree = "<group>"; };
 		6DECFAD8169354990009A010 /* wavefront.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = wavefront.h; path = StanHull/wavefront.h; sourceTree = "<group>"; };
@@ -92,6 +96,8 @@
 				6D0D36C11690D1F70007D530 /* DDConvexHullPlugin.cpp */,
 				6DECFAF11693AFA60009A010 /* DDConvexHullCmd.cpp */,
 				6DECFAF51693B08D0009A010 /* DDConvexHullCmd.h */,
+				6D26E39116B792E2007148BB /* DDConvexHullUtils.cpp */,
+				6D26E39216B792E2007148BB /* DDConvexHullUtils.h */,
 			);
 			name = Source;
 			sourceTree = "<group>";
@@ -126,6 +132,7 @@
 			files = (
 				6D0D36BD1690CBCE0007D530 /* DDConvexHullNode.h in Headers */,
 				6D0D36C81690DDF90007D530 /* hull.h in Headers */,
+				6D26E39416B792E2007148BB /* DDConvexHullUtils.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -172,7 +179,7 @@
 		6D0D36A61690C86D0007D530 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0450;
+				LastUpgradeCheck = 0460;
 				ORGANIZATIONNAME = "Jonathan Tilden";
 			};
 			buildConfigurationList = 6D0D36A91690C86D0007D530 /* Build configuration list for PBXProject "DDConvexHull" */;
@@ -202,6 +209,7 @@
 				6D0D36C21690D1F70007D530 /* DDConvexHullPlugin.cpp in Sources */,
 				6D0D36C71690DDF90007D530 /* hull.cpp in Sources */,
 				6DECFAF31693AFA60009A010 /* DDConvexHullCmd.cpp in Sources */,
+				6D26E39316B792E2007148BB /* DDConvexHullUtils.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -302,6 +310,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				COMBINE_HIDPI_IMAGES = YES;
 				DYLIB_COMPATIBILITY_VERSION = "";
 				DYLIB_CURRENT_VERSION = "";
 				EXECUTABLE_EXTENSION = bundle;
@@ -326,6 +335,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				COMBINE_HIDPI_IMAGES = YES;
 				DYLIB_COMPATIBILITY_VERSION = "";
 				DYLIB_CURRENT_VERSION = "";
 				EXECUTABLE_EXTENSION = bundle;
@@ -397,6 +407,7 @@
 				6DECFAE7169354C00009A010 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
