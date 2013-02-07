@@ -133,8 +133,10 @@ MStatus DDConvexHullUtils::generateMayaHull(const MObject &input,
         }
         else
         {
+            polyCounts.setLength(hullResult.mNumFaces);
             for (uint i=0; i < hullResult.mNumFaces; i++)
             {
+                
                 polyCounts[i] = 3;
                 uint *idx = &hullResult.mIndices[i*3];
                 
@@ -159,6 +161,7 @@ MStatus DDConvexHullUtils::generateMayaHull(const MObject &input,
     }
     
     // Mem Cleanup
+    hullComputer.ReleaseResult(hullResult);
     delete[] inputVerts;
     
     return hullStat;

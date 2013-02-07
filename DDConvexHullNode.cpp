@@ -7,17 +7,26 @@
 //
 
 #include "DDConvexHullNode.h"
-
+#include "DDConvexHullUtils.h"
 #include <maya/MStatus.h>
 #include <maya/MFnTypedAttribute.h>
+#include <maya/MFnNumericAttribute.h>
+#include <maya/MFnNumericData.h>
 #include <maya/MFnMeshData.h>
 #include <maya/MPointArray.h>
 #include <maya/MIntArray.h>
 #include <stdio.h>
 
 // Attribute definitions
-MObject DDConvexHullNode::aInputPolymesh;
-MObject DDConvexHullNode::aOutput;
+MObject DDConvexHullNode::inputPolymeshAttr;
+MObject DDConvexHullNode::outputPolymeshAttr;
+MObject DDConvexHullNode::useSkinWidthAttr;
+MObject DDConvexHullNode::skinWidthAttr;
+MObject DDConvexHullNode::normalEpsilonAttr;
+MObject DDConvexHullNode::useTrianglesAttr;
+MObject DDConvexHullNode::maxOutputVerticesAttr;
+MObject DDConvexHullNode::useReverseTriOrderAttr;
+
 
 // Maya Node ID
 MTypeId DDConvexHullNode::id(0x7FFFF);
@@ -39,62 +48,177 @@ MStatus DDConvexHullNode::initialize()
     MStatus stat;
     
     // InputPolymesh
-    MFnTypedAttribute inputPolymeshAttr;
-    aInputPolymesh = inputPolymeshAttr.create("inputPolymesh", "ip",
-                                             MFnData::kMesh, &stat);
+    MFnTypedAttribute inputPolymeshAttrFn;
+    inputPolymeshAttr = inputPolymeshAttrFn.create("inputPolymesh", "ip",
+                                                   MFnData::kMesh, &stat);
     if (stat != MStatus::kSuccess)
     {
         return stat;
     }
-    //inputPolymeshAttr.setKeyable(false);
-    
+        
     // Output
-    MFnTypedAttribute outputAttr;
-    aOutput = outputAttr.create("output", "out", MFnData::kMesh, &stat);
+    MFnTypedAttribute outputPolymeshAttrFn;
+    outputPolymeshAttr = outputPolymeshAttrFn.create("output", "out",
+                                                     MFnData::kMesh, &stat);
     if (stat != MStatus::kSuccess)
     {
         return stat;
     }
-    outputAttr.setWritable(false);
-    outputAttr.setStorable(false);
-    outputAttr.setKeyable(false);
+    outputPolymeshAttrFn.setWritable(false);
+    outputPolymeshAttrFn.setStorable(false);
+    outputPolymeshAttrFn.setKeyable(false);
+    
+    // Skin Width Attrs
+    MFnNumericAttribute useSkinWidthAttrFn;
+    useSkinWidthAttr = useSkinWidthAttrFn.create("skinWidthEnabled","skwen",
+                                                 MFnNumericData::kBoolean,
+                                                 false, &stat);
+    useSkinWidthAttrFn.setWritable(true);
+    useSkinWidthAttrFn.setStorable(true);
+    useSkinWidthAttrFn.setKeyable(true);
+    useSkinWidthAttrFn.setDefault(false);
+    
+    MFnNumericAttribute skinWidthFn;
+    skinWidthAttr = skinWidthFn.create("skinWidth", "skw",
+                                       MFnNumericData::kDouble, .01f, &stat);
+    skinWidthFn.setWritable(true);
+    skinWidthFn.setStorable(true);
+    skinWidthFn.setKeyable(true);
+    skinWidthFn.setDefault(0.01f);
+    
+    // Normal Epsilon
+    MFnNumericAttribute normalEpsilonAttrFn;
+    normalEpsilonAttr = normalEpsilonAttrFn.create("normalEpisilon", "ep",
+                                                   MFnNumericData::kDouble,
+                                                   .001f, &stat);
+    normalEpsilonAttrFn.setWritable(true);
+    normalEpsilonAttrFn.setStorable(true);
+    normalEpsilonAttrFn.setKeyable(true);
+    normalEpsilonAttrFn.setDefault(0.001f);
+    normalEpsilonAttrFn.setMin(0.000001f);
+    
+    // Force usage of triangles
+    // NOTE: As far as I can tell, the hulls always seem to come in already
+    //       triangulated.  The code looks to read as only "report" as tris
+    //       instead of as polys.  Not sure what the difference is here, so
+    //       for now, the attribute is hidden and defaulting to true.
+    MFnNumericAttribute useTrianglesAttrFn;
+    useTrianglesAttr = useSkinWidthAttrFn.create("forceTriangles","tri",
+                                                 MFnNumericData::kBoolean,
+                                                 true, &stat);
+    useTrianglesAttrFn.setWritable(true);
+    useTrianglesAttrFn.setStorable(true);
+    useTrianglesAttrFn.setKeyable(true);
+    useTrianglesAttrFn.setDefault(true);
+    useTrianglesAttrFn.setHidden(true);
+    
+    // Maximum number of output verts attr
+    MFnNumericAttribute maxOutputVerticesAttrFn;
+    maxOutputVerticesAttr = maxOutputVerticesAttrFn.create("maxVertices", "max",
+                                                           MFnNumericData::kInt,
+                                                           4096, &stat);
+    maxOutputVerticesAttrFn.setWritable(true);
+    maxOutputVerticesAttrFn.setStorable(true);
+    maxOutputVerticesAttrFn.setKeyable(true);
+    maxOutputVerticesAttrFn.setDefault(4096);
+    maxOutputVerticesAttrFn.setMin(4);
+    
+    // Reverse Triangle Order
+    MFnNumericAttribute useReverseTriOrderAttrFn;
+    useReverseTriOrderAttr = useReverseTriOrderAttrFn.create("reverseNormals",
+                                              "rev", MFnNumericData::kBoolean,
+                                              false, &stat);
+    useReverseTriOrderAttrFn.setWritable(true);
+    useReverseTriOrderAttrFn.setStorable(true);
+    useReverseTriOrderAttrFn.setKeyable(true);
+    useReverseTriOrderAttrFn.setDefault(false);
+    
     
     // Add the attributes
-    addAttribute(aInputPolymesh);
-    addAttribute(aOutput);
+    addAttribute(useSkinWidthAttr);
+    addAttribute(skinWidthAttr);
+    addAttribute(normalEpsilonAttr);
+    addAttribute(useTrianglesAttr);
+    addAttribute(maxOutputVerticesAttr);
+    addAttribute(useReverseTriOrderAttr);
+    addAttribute(inputPolymeshAttr);
+    addAttribute(outputPolymeshAttr);
     
     // Setup attribute relationships
-    attributeAffects(aInputPolymesh, aOutput);
+    attributeAffects(useSkinWidthAttr, outputPolymeshAttr);
+    attributeAffects(skinWidthAttr, outputPolymeshAttr);
+    attributeAffects(normalEpsilonAttr, outputPolymeshAttr);
+    attributeAffects(useTrianglesAttr, outputPolymeshAttr);
+    attributeAffects(maxOutputVerticesAttr, outputPolymeshAttr);
+    attributeAffects(useReverseTriOrderAttr, outputPolymeshAttr);
+    attributeAffects(inputPolymeshAttr, outputPolymeshAttr);
     return MStatus::kSuccess;
-}
-
-
-HullError DDConvexHullNode::createConvexHull(MObject &outMesh,
-                                             const MFnMesh &inMeshFn)
-{
-    return QE_OK;
 }
 
 
 MStatus DDConvexHullNode::compute(const MPlug &plug, MDataBlock &data)
 {
     MStatus stat;
-    if (plug == aOutput)
+    if (plug == outputPolymeshAttr)
     {
         // Get the data from the input and set it to the output
-        MDataHandle inputData  = data.inputValue(aInputPolymesh, &stat);
+        MDataHandle inputData(data.inputValue(inputPolymeshAttr, &stat));
         if (stat != MStatus::kSuccess)
         {
             return stat;
         }
+        MObject inputMesh = inputData.asMesh();
         
-        MObject inputMesh   = inputData.asMesh();
-        MFnMesh inputMeshFn(inputMesh, &stat);
+        // Skin Width
+        MDataHandle useSkinWidthData(data.inputValue(useSkinWidthAttr, &stat));
         if (stat != MStatus::kSuccess)
         {
             return stat;
         }
+        bool useSkinWidth = useSkinWidthData.asBool();
         
+        MDataHandle skinWidthData(data.inputValue(skinWidthAttr, &stat));
+        if (stat != MStatus::kSuccess)
+        {
+            return stat;
+        }
+        double skinWidth = skinWidthData.asDouble();
+        
+        // Epsilon
+        MDataHandle normalEpsilonData(data.inputValue(normalEpsilonAttr,&stat));
+        if (stat != MStatus::kSuccess)
+        {
+            return stat;
+        }
+        double normalEpsilon = normalEpsilonData.asDouble();
+        
+        // Force Triangles
+        MDataHandle useTrianglesData(data.inputValue(useTrianglesAttr, &stat));
+        if (stat != MStatus::kSuccess)
+        {
+            return stat;
+        }
+        bool useTriangles = useTrianglesData.asBool();
+        
+        // Output verts
+        MDataHandle maxOutputVertData(data.inputValue(maxOutputVerticesAttr,
+                                                      &stat));
+        if (stat != MStatus::kSuccess)
+        {
+            return stat;
+        }
+        uint maxOutputVerts = maxOutputVertData.asInt();
+        
+        // Reverse Triangles
+        MDataHandle useRevTriData(data.inputValue(useReverseTriOrderAttr,
+                                                  &stat));
+        if (stat != MStatus::kSuccess)
+        {
+            return stat;
+        }
+        bool useReverseTriOrder = useRevTriData.asBool();
+        
+        // Create output MObject
         MFnMeshData outputDataCreator;
         MObject outputMesh = outputDataCreator.create(&stat);
         if (stat != MStatus::kSuccess)
@@ -102,117 +226,28 @@ MStatus DDConvexHullNode::compute(const MPlug &plug, MDataBlock &data)
             return stat;
         }
 
-/*        
-        // Compute the hull
-        HullError res = createConvexHull(outputMesh, inputMeshFn);
-        if (res != QE_OK)
-        {
-            return MStatus::kFailure;
-        }
- */
- 
-        // Iterate through the mesh and build out the required bits of data
-        HullDesc desc;
-        //desc.mFlags  = QF_TRIANGLES | QF_SKIN_WIDTH;
-        desc.mVcount = inputMeshFn.numVertices();
-        //desc.mMaxVertices = desc.mVcount;
-        desc.mVertices = new double[desc.mVcount*3];
-        desc.mVertexStride = sizeof(double)*3;
-        
-        MPointArray points;
-        inputMeshFn.getPoints(points);
-        for (uint i=0; i < desc.mVcount; i++)
-        {
-            desc.mVertices[i*3]   = points[i].x;
-            desc.mVertices[i*3+1] = points[i].y;
-            desc.mVertices[i*3+2] = points[i].z;
-        }
-        
-        // Using the desc object, create the hull
-        HullResult hull;
-        HullLibrary hullComputer;
-        HullError ret = hullComputer.CreateConvexHull(desc, hull);
-        if (ret == QE_OK)
-        {
-            // Grab the verts
-            MPointArray outPoints;
-            for (uint i=0; i < hull.mNumOutputVertices; i++)
-            {
-                MPoint curPoint(hull.mOutputVertices[i*3],
-                                hull.mOutputVertices[i*3+1],
-                                hull.mOutputVertices[i*3+2]);
-                outPoints.append(curPoint);
-            }
-            
-            // Check if the results are in polygons, or triangles. Depending on
-            // which for the result is in, the way the face indices are setup
-            // is different.
-            MIntArray polyCounts;
-            MIntArray vertexConnects;
-            
-            if (hull.mPolygons)
-            {
-                const uint *idx = hull.mIndices;
-                for (uint i=0; i < hull.mNumFaces; i++)
-                {
-                    uint pCount = *idx++;
-                    polyCounts.append(pCount);
-                    
-                    for (uint j=0; j < pCount; j++)
-                    {
-                        uint val = idx[0] + 1;
-                        vertexConnects.append(val);
-                        idx++;
-                    }
-                }
-            }
-            else
-            {
-                for (uint i=0; i < hull.mNumFaces; i++)
-                {
-                    polyCounts[i] = 3;
-                    uint *idx = &hull.mIndices[i*3];
-                    vertexConnects.append(idx[0]+1);
-                    vertexConnects.append(idx[1]+1);
-                    vertexConnects.append(idx[2]+1);
-                }
-            }
-                        
-            // Setup the outmesh
-            MFnMesh outMeshFn;
-            outMeshFn.create(hull.mNumOutputVertices,
-                             hull.mNumFaces,
-                             outPoints,
-                             polyCounts,
-                             vertexConnects,
-                             outputMesh,
-                             &stat);
-        }
-        
-        MDataHandle outputData = data.outputValue(aOutput, &stat);
+        // Generate the hull
+        stat = DDConvexHullUtils::generateMayaHull(inputMesh,
+                                                   outputMesh,
+                                                   useTriangles,
+                                                   maxOutputVerts,
+                                                   useSkinWidth,
+                                                   skinWidth,
+                                                   normalEpsilon,
+                                                   useReverseTriOrder);
         if (stat != MStatus::kSuccess)
         {
             return stat;
         }
-
         
-        
-        
+        // Set the output Data
+        MDataHandle outputData = data.outputValue(outputPolymeshAttr, &stat);
         if (stat != MStatus::kSuccess)
         {
             return stat;
         }
- 
- 
-        // Set the data
-        //inputMeshFn.copy(inputMesh, outputMesh);
         outputData.set(outputMesh);
-        data.setClean(aOutput);
-        
-        // Cleanup and return
-        delete desc.mVertices;
-        hullComputer.ReleaseResult(hull);
-
+        data.setClean(outputPolymeshAttr);
     }
     else
     {

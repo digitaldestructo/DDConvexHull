@@ -35,11 +35,14 @@ public:
     static MTypeId id;
     
     // Attribute object handles
-    static MObject aInputPolymesh;
-    static MObject aOutput;
-
-private:
-    HullError createConvexHull(MObject &outMesh, const MFnMesh &inMeshFn);
+    static MObject useSkinWidthAttr;
+    static MObject skinWidthAttr;
+    static MObject normalEpsilonAttr;
+    static MObject useTrianglesAttr;
+    static MObject maxOutputVerticesAttr;
+    static MObject useReverseTriOrderAttr;
+    static MObject inputPolymeshAttr;
+    static MObject outputPolymeshAttr;
 };
 
 
