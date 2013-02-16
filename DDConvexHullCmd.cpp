@@ -54,7 +54,9 @@ MStatus DDConvexHullCmd::doIt(const MArgList& args)
     MObject outMeshNode = dm.createNode(MFn::kMesh);
     MFnDependencyNode outMeshDag(outMeshNode);
     outMeshDag.setName("poopShape#");
-    return DDConvexHullUtils::generateMayaHull(inputMesh.node(), outMeshNode);
+    DDConvexHullUtils::hullOpts hullOptions;
+    return DDConvexHullUtils::generateMayaHull(outMeshNode,
+                                               inputMesh.node(), hullOptions);
 
 }
 

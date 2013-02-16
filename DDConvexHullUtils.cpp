@@ -28,14 +28,9 @@ MString DDConvexHullUtils::int_to_string(int x)
     return MString((ss.str()).c_str());
 }
 
-MStatus DDConvexHullUtils::generateMayaHull(const MObject &input,
-                                            MObject &output,
-                                            bool forceTriangles,
-                                            uint maxOutputVertices,
-                                            bool useSkinWidth,
-                                            double skinWidth,
-                                            double normalEpsilon,
-                                            bool reverseTriangleOrder)
+MStatus DDConvexHullUtils::generateMayaHull(MObject &output,
+                                const MObject &input,
+                                const DDConvexHullUtils::hullOpts &hullOptions)
 {
     // Convert the input mobject to mfnmesh
     if (!input.hasFn(MFn::kMesh))
@@ -51,32 +46,39 @@ MStatus DDConvexHullUtils::generateMayaHull(const MObject &input,
     {
         return MStatus::kFailure;
     }
-
-    // Mem Cleanup req.
-    double *inputVerts = new double[numInputVerts*3];
     
     MPointArray points;
     inputMesh.getPoints(points);
+    
+    return generateMayaHull(output, points, hullOptions);
+}
+
+MStatus DDConvexHullUtils::generateMayaHull(MObject &output,
+                                const MPointArray &vertices,
+                                const DDConvexHullUtils::hullOpts &hullOptions)
+{
+    // Allocate and push the vert list into the new array Mem Cleanup req.
+    uint numInputVerts = vertices.length();
+    double *inputVerts = new double[numInputVerts*3];
     for (uint i=0; i < numInputVerts; i++)
     {
         uint offset = i*3;
-        inputVerts[offset]   = points[i].x;
-        inputVerts[offset+1] = points[i].y;
-        inputVerts[offset+2] = points[i].z;
+        inputVerts[offset]   = vertices[i].x;
+        inputVerts[offset+1] = vertices[i].y;
+        inputVerts[offset+2] = vertices[i].z;
     }
-    
     
     // Setup the flags
     uint hullFlags = QF_DEFAULT;
-    if (forceTriangles)
+    if (hullOptions.forceTriangles)
     {
         hullFlags |= QF_TRIANGLES;
     }
-    if (useSkinWidth)
+    if (hullOptions.useSkinWidth)
     {
         hullFlags |= QF_SKIN_WIDTH;
     }
-    if (reverseTriangleOrder)
+    if (hullOptions.reverseTriangleOrder)
     {
         hullFlags |= QF_REVERSE_ORDER;
     }
@@ -84,9 +86,9 @@ MStatus DDConvexHullUtils::generateMayaHull(const MObject &input,
     // Create the description
     HullDesc hullDescription;
     hullDescription.mFlags = hullFlags;
-    hullDescription.mMaxVertices = maxOutputVertices;
-    hullDescription.mSkinWidth = skinWidth;
-    hullDescription.mNormalEpsilon = normalEpsilon;
+    hullDescription.mMaxVertices = hullOptions.maxOutputVertices;
+    hullDescription.mSkinWidth = hullOptions.skinWidth;
+    hullDescription.mNormalEpsilon = hullOptions.normalEpsilon;
     hullDescription.mVertexStride = sizeof(double)*3;
     hullDescription.mVcount = numInputVerts;
     hullDescription.mVertices = inputVerts;

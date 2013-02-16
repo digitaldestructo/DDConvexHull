@@ -8,8 +8,15 @@
 
 #include "DDConvexHullNode.h"
 #include "DDConvexHullUtils.h"
+#include <maya/MArrayDataHandle.h>
+#include <maya/MDataHandle.h>
 #include <maya/MStatus.h>
+#include <maya/MItMeshEdge.h>
+#include <maya/MItMeshPolygon.h>
 #include <maya/MFnTypedAttribute.h>
+#include <maya/MFnComponentListData.h>
+#include <maya/MFnSingleIndexedComponent.h>
+#include <maya/MFnCompoundAttribute.h>
 #include <maya/MFnNumericAttribute.h>
 #include <maya/MFnNumericData.h>
 #include <maya/MFnMeshData.h>
@@ -18,6 +25,8 @@
 #include <stdio.h>
 
 // Attribute definitions
+MObject DDConvexHullNode::inputAttr;
+MObject DDConvexHullNode::inputComponentsAttr;
 MObject DDConvexHullNode::inputPolymeshAttr;
 MObject DDConvexHullNode::outputPolymeshAttr;
 MObject DDConvexHullNode::useSkinWidthAttr;
@@ -55,6 +64,20 @@ MStatus DDConvexHullNode::initialize()
     {
         return stat;
     }
+    
+    // Input Components
+    MFnTypedAttribute inputComponentsAttrFn;
+    inputComponentsAttr = inputComponentsAttrFn.create("inputComponents",
+                                                "ics", MFnData::kComponentList);
+    
+    // Setup the compound attr as array called input, with polymesh and
+    // component inputs as children
+    MFnCompoundAttribute inputAttrFn;
+    inputAttr = inputAttrFn.create("input", "input");
+    inputAttrFn.addChild(inputPolymeshAttr);
+    inputAttrFn.addChild(inputComponentsAttr);
+    inputAttrFn.setArray(true);
+    inputAttrFn.setIndexMatters(false);
         
     // Output
     MFnTypedAttribute outputPolymeshAttrFn;
@@ -141,7 +164,7 @@ MStatus DDConvexHullNode::initialize()
     addAttribute(useTrianglesAttr);
     addAttribute(maxOutputVerticesAttr);
     addAttribute(useReverseTriOrderAttr);
-    addAttribute(inputPolymeshAttr);
+    addAttribute(inputAttr);
     addAttribute(outputPolymeshAttr);
     
     // Setup attribute relationships
@@ -151,7 +174,9 @@ MStatus DDConvexHullNode::initialize()
     attributeAffects(useTrianglesAttr, outputPolymeshAttr);
     attributeAffects(maxOutputVerticesAttr, outputPolymeshAttr);
     attributeAffects(useReverseTriOrderAttr, outputPolymeshAttr);
+    attributeAffects(inputAttr, outputPolymeshAttr);
     attributeAffects(inputPolymeshAttr, outputPolymeshAttr);
+    attributeAffects(inputComponentsAttr, outputPolymeshAttr);
     return MStatus::kSuccess;
 }
 
@@ -161,13 +186,137 @@ MStatus DDConvexHullNode::compute(const MPlug &plug, MDataBlock &data)
     MStatus stat;
     if (plug == outputPolymeshAttr)
     {
-        // Get the data from the input and set it to the output
-        MDataHandle inputData(data.inputValue(inputPolymeshAttr, &stat));
-        if (stat != MStatus::kSuccess)
+        // Get the data from the input compound
+        MPointArray allPoints;
+        MArrayDataHandle inputData(data.inputArrayValue(inputAttr, &stat));
+        uint elemCount = inputData.elementCount();
+        for (uint i=0; i < elemCount; i++)
         {
-            return stat;
+            MDataHandle curElem = inputData.inputValue();
+            MObject curMesh = (curElem.child(inputPolymeshAttr)).asMesh();
+            MObject curComps = (curElem.child(inputComponentsAttr)).data();
+            
+            // Need a mesh plug for comps to work
+            if (curMesh.isNull())
+            {
+                inputData.next();
+                continue;
+            }
+            
+            // Create the function set for meshes
+            MFnMesh curMeshFn(curMesh);
+            MPointArray meshPoints;
+            curMeshFn.getPoints(meshPoints);
+            
+            // Assume we have a mesh here.  If the comps are null, then that
+            // is fine, we're using the whole mesh
+            if (curComps.isNull())
+            {
+                
+                uint numPoints = meshPoints.length();
+                for (uint j=0; j < numPoints; j++)
+                {
+                    allPoints.append(meshPoints[j]);
+                }
+            }
+            else
+            {
+                // Get the single-indexed components, convert to points, then
+                // upload the values to the master points array (allPoints)
+                MFnComponentListData compListFn(curComps);
+                uint compListLen = compListFn.length();
+                for (uint j=0; j < compListLen; j++)
+                {
+                    MObject component = compListFn[j];
+                    
+                    // Make sure its a vert, face, edge, or UV
+                    if (!component.hasFn(MFn::kSingleIndexedComponent))
+                    {
+                        continue;
+                    }
+                    
+                    MFnSingleIndexedComponent compFn(component);
+                    
+                    // Possible early out... check to see if we have the
+                    // complete data.  If so, just push all the mesh points
+                    // into the list
+                    if (compFn.isComplete())
+                    {
+                        uint numPoints = meshPoints.length();
+                        for (uint j=0; j < numPoints; j++)
+                        {
+                            allPoints.append(meshPoints[j]);
+                        }
+                        continue;
+                    }
+                    
+                    MIntArray elems;
+                    compFn.getElements(elems);
+                    uint elemLen = elems.length();
+                    
+                    // Ensure we're looking at vertices
+                    uint compType = compFn.componentType();
+                    if (compType == MFn::kMeshVertComponent)
+                    {
+                        for (uint k=0; k < elemLen; k++)
+                        {
+                            allPoints.append(meshPoints[elems[k]]);
+                        }
+                    }
+                    else if (compType == MFn::kMeshEdgeComponent)
+                    {
+                        // Need to get the vertices from edge
+                        MItMeshEdge edgeIt(curMesh, component);
+                        while (!edgeIt.isDone())
+                        {
+                            allPoints.append(edgeIt.point(0));
+                            allPoints.append(edgeIt.point(1));
+                            edgeIt.next();
+                        }
+                    }
+                    else if (compType == MFn::kMeshPolygonComponent)
+                    {
+                        // For some reason, I can't use MItMeshPolygon to find
+                        // the points for these components (I need a DAGPath
+                        // object if I want to use the component objects
+                        // Instead, going to index into the MFnMesh
+                        for (uint k=0; k < elemLen; k++)
+                        {
+                            MIntArray polyVerts;
+                            curMeshFn.getPolygonVertices(elems[k], polyVerts);
+                            uint polyVertsLen = polyVerts.length();
+                            for (uint p=0; p < polyVertsLen; p++)
+                            {
+                                allPoints.append(meshPoints[p]);
+                            }
+                        }
+                    }
+                    else if (compType == MFn::kMeshFaceVertComponent)
+                    {
+                        // I think this is how you convert face to object
+                        // relative vertices...
+                        MIntArray faceCounts;
+                        MIntArray faceVerts;
+                        curMeshFn.getVertices(faceCounts, faceVerts);
+                        for (uint k=0; k < elemLen; k++)
+                        {
+                            uint objectVertID = faceVerts[k];
+                            allPoints.append(meshPoints[objectVertID]);
+                        }
+                    }
+                    else
+                    {
+                        // Not supported
+                        continue;
+                    }
+                    
+                }
+            }
+            inputData.next();
         }
-        MObject inputMesh = inputData.asMesh();
+        
+        // Create the hull options and get the values from the attributes
+        DDConvexHullUtils::hullOpts hullOptions;
         
         // Skin Width
         MDataHandle useSkinWidthData(data.inputValue(useSkinWidthAttr, &stat));
@@ -175,14 +324,14 @@ MStatus DDConvexHullNode::compute(const MPlug &plug, MDataBlock &data)
         {
             return stat;
         }
-        bool useSkinWidth = useSkinWidthData.asBool();
+        hullOptions.useSkinWidth = useSkinWidthData.asBool();
         
         MDataHandle skinWidthData(data.inputValue(skinWidthAttr, &stat));
         if (stat != MStatus::kSuccess)
         {
             return stat;
         }
-        double skinWidth = skinWidthData.asDouble();
+        hullOptions.skinWidth = skinWidthData.asDouble();
         
         // Epsilon
         MDataHandle normalEpsilonData(data.inputValue(normalEpsilonAttr,&stat));
@@ -190,7 +339,7 @@ MStatus DDConvexHullNode::compute(const MPlug &plug, MDataBlock &data)
         {
             return stat;
         }
-        double normalEpsilon = normalEpsilonData.asDouble();
+        hullOptions.normalEpsilon = normalEpsilonData.asDouble();
         
         // Force Triangles
         MDataHandle useTrianglesData(data.inputValue(useTrianglesAttr, &stat));
@@ -198,7 +347,7 @@ MStatus DDConvexHullNode::compute(const MPlug &plug, MDataBlock &data)
         {
             return stat;
         }
-        bool useTriangles = useTrianglesData.asBool();
+        hullOptions.forceTriangles = useTrianglesData.asBool();
         
         // Output verts
         MDataHandle maxOutputVertData(data.inputValue(maxOutputVerticesAttr,
@@ -207,7 +356,7 @@ MStatus DDConvexHullNode::compute(const MPlug &plug, MDataBlock &data)
         {
             return stat;
         }
-        uint maxOutputVerts = maxOutputVertData.asInt();
+        hullOptions.maxOutputVertices = maxOutputVertData.asInt();
         
         // Reverse Triangles
         MDataHandle useRevTriData(data.inputValue(useReverseTriOrderAttr,
@@ -216,7 +365,7 @@ MStatus DDConvexHullNode::compute(const MPlug &plug, MDataBlock &data)
         {
             return stat;
         }
-        bool useReverseTriOrder = useRevTriData.asBool();
+        hullOptions.reverseTriangleOrder = useRevTriData.asBool();
         
         // Create output MObject
         MFnMeshData outputDataCreator;
@@ -227,14 +376,10 @@ MStatus DDConvexHullNode::compute(const MPlug &plug, MDataBlock &data)
         }
 
         // Generate the hull
-        stat = DDConvexHullUtils::generateMayaHull(inputMesh,
-                                                   outputMesh,
-                                                   useTriangles,
-                                                   maxOutputVerts,
-                                                   useSkinWidth,
-                                                   skinWidth,
-                                                   normalEpsilon,
-                                                   useReverseTriOrder);
+        stat = DDConvexHullUtils::generateMayaHull(outputMesh,
+                                                   allPoints,
+                                                   hullOptions);
+
         if (stat != MStatus::kSuccess)
         {
             return stat;
