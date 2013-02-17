@@ -9,7 +9,7 @@
 #include "DDConvexHullUtils.h"
 #include "StanHull/hull.h"
 #include <maya/MFnMesh.h>
-#include <maya/MFnMesh.h>
+#include <maya/MFnSingleIndexedComponent.h>
 #include <maya/MIntArray.h>
 #include <maya/MPoint.h>
 #include <maya/MPointArray.h>
@@ -167,4 +167,66 @@ MStatus DDConvexHullUtils::generateMayaHull(MObject &output,
     delete[] inputVerts;
     
     return hullStat;
+}
+
+MStatus DDConvexHullUtils::componentToVertexIDs(MIntArray &outIndices,
+                                                const MObject &mesh,
+                                                const MObject &component)
+{
+    // Create the funciton sets
+    MFnSingleIndexedComponent compFn(component);
+    MFnMesh meshFn(mesh);
+        
+    MIntArray elems;
+    compFn.getElements(elems);
+    uint elemLen = elems.length();
+    
+    // Convert the components to vertices based on component type
+    uint compType = compFn.componentType();
+    if (compType == MFn::kMeshVertComponent)
+    {
+        outIndices = elems;
+    }
+    else if (compType == MFn::kMeshEdgeComponent)
+    {
+        for (uint i=0; i < elemLen; i++)
+        {
+            int2 edgeVerts;
+            meshFn.getEdgeVertices(elems[i], edgeVerts);
+            outIndices.append(edgeVerts[0]);
+            outIndices.append(edgeVerts[1]);
+        }
+    }
+    else if (compType == MFn::kMeshEdgeComponent)
+    {
+        for (uint i=0; i < elemLen; i++)
+        {
+            // Grab verts for the current poly
+            MIntArray polyVerts;
+            meshFn.getPolygonVertices(elems[i], polyVerts);
+            uint polyVertsLen = polyVerts.length();
+            for (uint j=0; j < polyVertsLen; j++)
+            {
+                outIndices.append(polyVerts[j]);
+            }
+        }
+    }
+    else if (compType == MFn::kMeshFaceVertComponent)
+    {
+        // I think this is how you convert face to object
+        // relative vertices...
+        MIntArray faceCounts;
+        MIntArray faceVerts;
+        meshFn.getVertices(faceCounts, faceVerts);
+        for (uint j=0; j < elemLen; j++)
+        {
+            outIndices.append(faceVerts[j]);
+        }
+    }
+    else
+    {
+        // Not supported
+        return MStatus::kNotImplemented;
+    }
+    return MStatus::kSuccess;
 }

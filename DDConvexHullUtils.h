@@ -13,6 +13,7 @@
 #include <maya/MPointArray.h>
 #include <maya/MString.h>
 #include <maya/MStatus.h>
+#include <maya/MIntArray.h>
 
 namespace DDConvexHullUtils
 {;
@@ -41,6 +42,10 @@ namespace DDConvexHullUtils
     MStatus generateMayaHull(MObject &output,
                              const MObject &input,
                              const hullOpts &hullOptions);
+    
+    MStatus componentToVertexIDs(MIntArray &outIndices,
+                                 const MObject &mesh,
+                                 const MObject &component);
  
     MString dbl_to_string(double x);
     MString int_to_string(int x);

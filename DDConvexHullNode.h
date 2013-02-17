@@ -45,6 +45,11 @@ public:
     static MObject inputComponentsAttr;
     static MObject inputPolymeshAttr;
     static MObject outputPolymeshAttr;
+
+private:
+    MStatus processInputIndex(MPointArray &allPoints,
+                              MDataHandle &meshHndl,
+                              MDataHandle &compHndl);
 };
 
 

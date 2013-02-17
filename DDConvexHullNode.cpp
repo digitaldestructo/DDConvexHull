@@ -181,6 +181,92 @@ MStatus DDConvexHullNode::initialize()
     return MStatus::kSuccess;
 }
 
+MStatus DDConvexHullNode::processInputIndex(MPointArray &allPoints,
+                                            MDataHandle &meshHndl,
+                                            MDataHandle &compHndl)
+{
+    MObject curMesh = meshHndl.asMesh();
+    MObject curComps = compHndl.data();
+    
+    // Need a mesh plug for comps to work
+    if (curMesh.isNull())
+    {
+        return MStatus::kFailure;
+    }
+    
+    // Create the function set for meshes and query for the points
+    MFnMesh curMeshFn(curMesh);
+    MPointArray meshPoints;
+    curMeshFn.getPoints(meshPoints);
+    
+    // Assume we have a mesh here.  If the comps are null, then that
+    // is fine, we're using the whole mesh
+    if (curComps.isNull())
+    {
+        uint numPoints = meshPoints.length();
+        for (uint i=0; i < numPoints; i++)
+        {
+            allPoints.append(meshPoints[i]);
+        }
+    }
+    else
+    {
+        // Get the single-indexed components, convert to points, then
+        // upload the values to the master points array (allPoints)
+        MFnComponentListData compListFn(curComps);
+        uint compListLen = compListFn.length();
+        for (uint i=0; i < compListLen; i++)
+        {
+            MObject component = compListFn[i];
+            
+            // Make sure its a vert, face, edge, or UV
+            if (!component.hasFn(MFn::kSingleIndexedComponent))
+            {
+                continue;
+            }
+            
+            // Check if the component is complete.  If so, push all the points
+            // for the mesh into the allPoints list
+            MFnSingleIndexedComponent compFn(component);
+            if (compFn.isComplete())
+            {
+                uint numPoints = meshPoints.length();
+                for (uint j=0; j < numPoints; j++)
+                {
+                    allPoints.append(meshPoints[j]);
+                }
+                continue;
+            }
+            else
+            {
+                MIntArray vertIndices;
+                MStatus stat = MStatus::kSuccess;
+                stat = DDConvexHullUtils::componentToVertexIDs(vertIndices,
+                                                               curMesh,
+                                                               component);
+                if (stat == MStatus::kNotImplemented)
+                {
+                    continue;
+                }
+                else if (stat == MStatus::kFailure)
+                {
+                    return stat;
+                }
+                
+                // Lookup the points and append to the list
+                uint vertIndicesLen = vertIndices.length();
+                for (uint j=0; j < vertIndicesLen; j++)
+                {
+                    MPoint point;
+                    curMeshFn.getPoint(vertIndices[j],point);
+                    allPoints.append(point);
+                }
+            }
+        }
+    }
+        
+    return MStatus::kSuccess;
+}
 
 MStatus DDConvexHullNode::compute(const MPlug &plug, MDataBlock &data)
 {
@@ -214,132 +300,12 @@ MStatus DDConvexHullNode::compute(const MPlug &plug, MDataBlock &data)
         for (uint i=0; i < elemCount; i++)
         {
             MDataHandle curElem = inputData.inputValue();
-            MObject curMesh = (curElem.child(inputPolymeshAttr)).asMesh();
-            MObject curComps = (curElem.child(inputComponentsAttr)).data();
-            
-            // Need a mesh plug for comps to work
-            if (curMesh.isNull())
+            MDataHandle meshHndl = curElem.child(inputPolymeshAttr);
+            MDataHandle compHndl = curElem.child(inputComponentsAttr);
+            MStatus result = processInputIndex(allPoints, meshHndl, compHndl);
+            if (result == MStatus::kFailure)
             {
-                inputData.next();
-                continue;
-            }
-            
-            // Create the function set for meshes
-            MFnMesh curMeshFn(curMesh);
-            MPointArray meshPoints;
-            curMeshFn.getPoints(meshPoints);
-            
-            // Assume we have a mesh here.  If the comps are null, then that
-            // is fine, we're using the whole mesh
-            if (curComps.isNull())
-            {
-                
-                uint numPoints = meshPoints.length();
-                for (uint j=0; j < numPoints; j++)
-                {
-                    allPoints.append(meshPoints[j]);
-                }
-            }
-            else
-            {
-                // Get the single-indexed components, convert to points, then
-                // upload the values to the master points array (allPoints)
-                MFnComponentListData compListFn(curComps);
-                uint compListLen = compListFn.length();
-                for (uint j=0; j < compListLen; j++)
-                {
-                    MObject component = compListFn[j];
-                    
-                    // Make sure its a vert, face, edge, or UV
-                    if (!component.hasFn(MFn::kSingleIndexedComponent))
-                    {
-                        continue;
-                    }
-                    
-                    MFnSingleIndexedComponent compFn(component);
-                    
-                    // Possible early out... check to see if we have the
-                    // complete data.  If so, just push all the mesh points
-                    // into the list
-                    if (compFn.isComplete())
-                    {
-                        uint numPoints = meshPoints.length();
-                        for (uint j=0; j < numPoints; j++)
-                        {
-                            allPoints.append(meshPoints[j]);
-                        }
-                        continue;
-                    }
-                    
-                    MIntArray elems;
-                    compFn.getElements(elems);
-                    uint elemLen = elems.length();
-                    
-                    // Ensure we're looking at vertices
-                    uint compType = compFn.componentType();
-                    if (compType == MFn::kMeshVertComponent)
-                    {
-                        for (uint k=0; k < elemLen; k++)
-                        {
-                            allPoints.append(meshPoints[elems[k]]);
-                        }
-                    }
-                    else if (compType == MFn::kMeshEdgeComponent)
-                    {
-                        // Need to get the vertices from edge
-                        for (uint k=0; k < elemLen; k++)
-                        {
-                            int2 edgeVerts;
-                            curMeshFn.getEdgeVertices(elems[k], edgeVerts);
-                            allPoints.append(meshPoints[edgeVerts[0]]);
-                            allPoints.append(meshPoints[edgeVerts[1]]);
-                        }
-                            
-//                        MItMeshEdge edgeIt(curMesh, component);
-//                        while (!edgeIt.isDone())
-//                        {
-//                            allPoints.append(edgeIt.point(0));
-//                            allPoints.append(edgeIt.point(1));
-//                            edgeIt.next();
-//                        }
-                    }
-                    else if (compType == MFn::kMeshPolygonComponent)
-                    {
-                        // For some reason, I can't use MItMeshPolygon to find
-                        // the points for these components (I need a DAGPath
-                        // object if I want to use the component objects
-                        // Instead, going to index into the MFnMesh
-                        for (uint k=0; k < elemLen; k++)
-                        {
-                            MIntArray polyVerts;
-                            curMeshFn.getPolygonVertices(elems[k], polyVerts);
-                            uint polyVertsLen = polyVerts.length();
-                            for (uint p=0; p < polyVertsLen; p++)
-                            {
-                                allPoints.append(meshPoints[polyVerts[p]]);
-                            }
-                        }
-                    }
-                    else if (compType == MFn::kMeshFaceVertComponent)
-                    {
-                        // I think this is how you convert face to object
-                        // relative vertices...
-                        MIntArray faceCounts;
-                        MIntArray faceVerts;
-                        curMeshFn.getVertices(faceCounts, faceVerts);
-                        for (uint k=0; k < elemLen; k++)
-                        {
-                            uint objectVertID = faceVerts[k];
-                            allPoints.append(meshPoints[objectVertID]);
-                        }
-                    }
-                    else
-                    {
-                        // Not supported
-                        continue;
-                    }
-                    
-                }
+                return result;
             }
             inputData.next();
         }
@@ -351,38 +317,6 @@ MStatus DDConvexHullNode::compute(const MPlug &plug, MDataBlock &data)
                                   "to compute the hull.");
             return MStatus::kFailure;
         }
-//        else
-//        {
-//            // Remove duplicates. need at least 8 vertices (to create a cube).
-//            // TODO: Can be faster if I was smarter, as a similar method is run
-//            //       in the hull builder itself.  however, at that point
-//            MPointArray master(allPoints);
-//            allPoints.clear();
-//            uint masterLen = master.length();
-//            for (uint j=0; j < masterLen; j++)
-//            {
-//                bool foundDuplicate = false;
-//                for (uint k=0; k < allPoints.length(); k++)
-//                {
-//                    if (master[j] == allPoints[k])
-//                    {
-//                        foundDuplicate = true;
-//                        break;
-//                    }
-//                }
-//                if (!foundDuplicate)
-//                {
-//                    allPoints.append(master[j]);
-//                }
-//            }
-//            if (allPoints.length() < 8)
-//            {
-//                MGlobal::displayError("At least 8 points must be specified.");
-//                return MStatus::kFailure;
-//            }
-//            allPoints = master;
-//            master.clear();
-//        }
         
         // Create the hull options and get the values from the attributes
         DDConvexHullUtils::hullOpts hullOptions;
