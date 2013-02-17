@@ -22,6 +22,7 @@
 #include <maya/MFnMeshData.h>
 #include <maya/MPointArray.h>
 #include <maya/MIntArray.h>
+#include <maya/MGlobal.h>
 #include <stdio.h>
 
 // Attribute definitions
@@ -60,15 +61,15 @@ MStatus DDConvexHullNode::initialize()
     MFnTypedAttribute inputPolymeshAttrFn;
     inputPolymeshAttr = inputPolymeshAttrFn.create("inputPolymesh", "ip",
                                                    MFnData::kMesh, &stat);
-    if (stat != MStatus::kSuccess)
-    {
-        return stat;
-    }
+    inputPolymeshAttrFn.setDisconnectBehavior(MFnAttribute::kDelete);
+    inputPolymeshAttrFn.setKeyable(false);
     
     // Input Components
     MFnTypedAttribute inputComponentsAttrFn;
     inputComponentsAttr = inputComponentsAttrFn.create("inputComponents",
                                                 "ics", MFnData::kComponentList);
+    inputComponentsAttrFn.setDisconnectBehavior(MFnAttribute::kReset);
+    inputPolymeshAttrFn.setKeyable(false);
     
     // Setup the compound attr as array called input, with polymesh and
     // component inputs as children
@@ -186,10 +187,30 @@ MStatus DDConvexHullNode::compute(const MPlug &plug, MDataBlock &data)
     MStatus stat;
     if (plug == outputPolymeshAttr)
     {
+        // Create output MObject
+        MFnMeshData outputDataCreator;
+        MObject outputMesh = outputDataCreator.create(&stat);
+        if (stat != MStatus::kSuccess)
+        {
+            return stat;
+        }
+        
+        // Get the output data handle
+        MDataHandle outputData = data.outputValue(outputPolymeshAttr, &stat);
+        if (stat != MStatus::kSuccess)
+        {
+            return stat;
+        }
+
+
         // Get the data from the input compound
         MPointArray allPoints;
         MArrayDataHandle inputData(data.inputArrayValue(inputAttr, &stat));
         uint elemCount = inputData.elementCount();
+        if (elemCount == 0)
+        {
+            return MStatus::kInvalidParameter;
+        }
         for (uint i=0; i < elemCount; i++)
         {
             MDataHandle curElem = inputData.inputValue();
@@ -266,13 +287,21 @@ MStatus DDConvexHullNode::compute(const MPlug &plug, MDataBlock &data)
                     else if (compType == MFn::kMeshEdgeComponent)
                     {
                         // Need to get the vertices from edge
-                        MItMeshEdge edgeIt(curMesh, component);
-                        while (!edgeIt.isDone())
+                        for (uint k=0; k < elemLen; k++)
                         {
-                            allPoints.append(edgeIt.point(0));
-                            allPoints.append(edgeIt.point(1));
-                            edgeIt.next();
+                            int2 edgeVerts;
+                            curMeshFn.getEdgeVertices(elems[k], edgeVerts);
+                            allPoints.append(meshPoints[edgeVerts[0]]);
+                            allPoints.append(meshPoints[edgeVerts[1]]);
                         }
+                            
+//                        MItMeshEdge edgeIt(curMesh, component);
+//                        while (!edgeIt.isDone())
+//                        {
+//                            allPoints.append(edgeIt.point(0));
+//                            allPoints.append(edgeIt.point(1));
+//                            edgeIt.next();
+//                        }
                     }
                     else if (compType == MFn::kMeshPolygonComponent)
                     {
@@ -287,7 +316,7 @@ MStatus DDConvexHullNode::compute(const MPlug &plug, MDataBlock &data)
                             uint polyVertsLen = polyVerts.length();
                             for (uint p=0; p < polyVertsLen; p++)
                             {
-                                allPoints.append(meshPoints[p]);
+                                allPoints.append(meshPoints[polyVerts[p]]);
                             }
                         }
                     }
@@ -314,6 +343,46 @@ MStatus DDConvexHullNode::compute(const MPlug &plug, MDataBlock &data)
             }
             inputData.next();
         }
+        
+        // Ensure we have verts.  If not, display a warning, and return success
+        if (allPoints.length() < 8)
+        {
+            MGlobal::displayError("At least 8 unique points are required " \
+                                  "to compute the hull.");
+            return MStatus::kFailure;
+        }
+//        else
+//        {
+//            // Remove duplicates. need at least 8 vertices (to create a cube).
+//            // TODO: Can be faster if I was smarter, as a similar method is run
+//            //       in the hull builder itself.  however, at that point
+//            MPointArray master(allPoints);
+//            allPoints.clear();
+//            uint masterLen = master.length();
+//            for (uint j=0; j < masterLen; j++)
+//            {
+//                bool foundDuplicate = false;
+//                for (uint k=0; k < allPoints.length(); k++)
+//                {
+//                    if (master[j] == allPoints[k])
+//                    {
+//                        foundDuplicate = true;
+//                        break;
+//                    }
+//                }
+//                if (!foundDuplicate)
+//                {
+//                    allPoints.append(master[j]);
+//                }
+//            }
+//            if (allPoints.length() < 8)
+//            {
+//                MGlobal::displayError("At least 8 points must be specified.");
+//                return MStatus::kFailure;
+//            }
+//            allPoints = master;
+//            master.clear();
+//        }
         
         // Create the hull options and get the values from the attributes
         DDConvexHullUtils::hullOpts hullOptions;
@@ -367,14 +436,6 @@ MStatus DDConvexHullNode::compute(const MPlug &plug, MDataBlock &data)
         }
         hullOptions.reverseTriangleOrder = useRevTriData.asBool();
         
-        // Create output MObject
-        MFnMeshData outputDataCreator;
-        MObject outputMesh = outputDataCreator.create(&stat);
-        if (stat != MStatus::kSuccess)
-        {
-            return stat;
-        }
-
         // Generate the hull
         stat = DDConvexHullUtils::generateMayaHull(outputMesh,
                                                    allPoints,
@@ -385,12 +446,6 @@ MStatus DDConvexHullNode::compute(const MPlug &plug, MDataBlock &data)
             return stat;
         }
         
-        // Set the output Data
-        MDataHandle outputData = data.outputValue(outputPolymeshAttr, &stat);
-        if (stat != MStatus::kSuccess)
-        {
-            return stat;
-        }
         outputData.set(outputMesh);
         data.setClean(outputPolymeshAttr);
     }
