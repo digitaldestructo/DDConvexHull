@@ -1,0 +1,290 @@
+source AEnewNonNumericMulti.mel;
+
+global proc addSelected()
+{
+    string $nodeName = "DDConvexHull1.input";
+    string $selected[] = `ls -sl -l`;
+    string $comps[];
+    string $meshes[];
+
+    for ($item in $selected)
+    {
+        // Extract the node and comps
+        string $obj = $item;
+        string $cmp = "";
+    
+        string $buffer[];
+        int $tokens = `tokenize $item "." $buffer`;
+        if ($tokens > 1)
+        {
+            $cmp = $buffer[1];
+        }
+        
+        // Check if $obj is transform or mesh.  We want shape
+        string $objTypes[] = `nodeType -i $obj`;
+        string $itemType = "";
+        for ($type in $objTypes)
+        {
+            if ($type == "transform")
+            {
+                $itemType = "transform";
+                break;
+            }
+            else if ($type == "mesh")
+            {
+                $itemType = "mesh";
+                break;
+            }
+        }
+        
+        if ($itemType == "transform")
+        {
+            string $shapes[] = `listRelatives -ni -s -f $obj`;
+            if (`size $shapes`)
+                $obj = $shapes[0];
+            else
+            {
+                warning ($obj + " is not the transform of a mesh.");
+                continue;
+            }
+        }
+        else if ($itemType != "mesh")
+        {
+            warning ($obj + " is not a transform of a mesh, or a mesh.");
+            continue;
+        }
+        
+        // OK, if there is a component, then index it
+        int $meshIdx = `stringArrayFind $obj 0 $meshes`;
+        if ($meshIdx < 0)
+        {
+            // Didn't find an index.  Create one
+            $meshIdx = `size $meshes`;
+            $meshes[`size $meshes`] = $obj;
+            $comps[`size $comps`] = $cmp;
+        }
+        else
+        {
+            if ($cmp != "")
+                $comps[$meshIdx] += (" " + $cmp);
+        }
+    }
+    
+    // Finally, iterate through the meshes.  If they aren't already connected,
+    // then connect them and add the components. Otherwise just add the comps.
+    string $connectedMeshes[] = `listConnections -sh 1 -d 1 -s 0 $nodeName`;
+    $connectedMeshes = `ls -l $connectedMeshes`;
+    for ($i=0; $i < `size $meshes`; $i++)
+    {
+        if (`stringArrayContains $meshes[$i] $connectedMeshes`)
+        {
+            // Get the index
+            
+            if ($comps[$i] != "")
+            {
+                string $buffer;
+                int $numTokens = `tokenize $comps[$i] " " $buffer`;
+                string $curComps = `getAttr
+            }
+        }
+    }
+//    string $intersector = `stringArrayIntersector`;
+//    stringArrayIntersector -e -intersect $connectedMeshes $intersector;
+//    stringArrayIntersector -e -intersect $meshes $intersector;
+//    string $meshesToUpdate[] = stringArrayIntersector -q $intersector;
+//    string $mehsesToAdd[] = `stringArrayRemove $meshesToUpdate $meshes`;
+//    deleteUI $intersector;
+
+}
+//addSelected();
+
+global proc AEDDConvexHullTemplate_dimSkinWidth(string $nodeName)
+{
+    int $skinWidthEnabled = `getAttr ($nodeName + ".skinWidthEnabled")`;
+    editorTemplate -dimControl $nodeName "skinWidth" (!$skinWidthEnabled);
+}
+
+global proc AEDDConvexHullTemplate_InputCompsNew(string $icsStr)
+{
+    setUITemplate -pst attributeEditorTemplate;
+    textFieldGrp -label "Input Components" 
+                 -editable 0 AEDDConvexHullTemplate_icsGrp;
+    setUITemplate -ppt;
+    
+    // Update the field
+    AEDDConvexHullTemplate_InputCompsRepl $icsStr;
+}
+
+global proc AEDDConvexHullTemplate_InputCompsRepl(string $icsStr)
+{
+    string $components[] = `getAttr $icsStr`;
+    string $items = `stringArrayToString $components " "`;
+    textFieldGrp -e -text $items AEDDConvexHullTemplate_icsGrp;
+}
+
+global proc AEDDConvexHullTemplate_InputMeshNew(string $meshStr)
+{
+    setUITemplate -pst attributeEditorTemplate;
+    textFieldGrp -label "Input Components" 
+                 -editable 0 AEDDConvexHullTemplate_meshGrp;
+    setUITemplate -ppt;
+    
+    // Update the field
+    AEDDConvexHullTemplate_InputMeshRepl $meshStr;
+}
+
+global proc AEDDConvexHullTemplate_InputMeshRepl(string $meshStr)
+{
+    // Get the connections to this attribute
+    string $conns[] = `listConnections -sh $meshStr`;
+    string $node  = "";
+    if (`sizeof $conns`)
+        $node = $conns[0];
+    textFieldGrp -e -text $node AEDDConvexHullTemplate_meshGrp;
+}
+
+global proc NewInput(string $name)
+{
+    setUITemplate -pst attributeEditorTemplate;
+    frameLayout -l "Convex Hull Inputs" AEDDConvexHullTemplate_InputFrame;
+    
+    setParent AEDDConvexHullTemplate_InputFrame;
+    columnLayout -adj 1 -rs 3 AEDDConvexHullTemplate_InputVLayout;
+    setParent ..;
+    
+    setParent AEDDConvexHullTemplate_InputVLayout;
+    string $buffer[];
+    tokenize $name "." $buffer;
+    string $remCmd = ("AEnewNonNumericMultiAddNewItem(\"" +
+                          $buffer[0] + "\",\"" + $buffer[1] + "\")");
+    string $selBtn = `button -l "Add Selected"`;
+    string $newBtn = `button -l "Add New Item" -c $remCmd`;
+    setParent ..;
+    
+    setUITemplate -ppt;
+    
+    NewInputUpdate $name;
+}
+
+global proc updateComponentList(string $attr, string $value)
+{
+    string $buffer[];
+    tokenize $value " " $buffer;
+    print (`size $buffer` + "\n");
+    print $buffer;
+    $value = ("\"" + `stringArrayToString $buffer "\" \""` + "\"");
+    string $cmd = ("setAttr " + $attr + " -type componentList " +
+                   `size $buffer` + " " + $value);
+    evalEcho($cmd);
+}
+
+proc NewInputIndex(string $name, int $index, string $parent)
+{
+    setUITemplate -pst attributeEditorTemplate;
+    setParent $parent;
+    
+    string $fullName = ($name + "[" + $index + "]");
+    string $uiName = "input[" + $index + "]";
+    string $frame = `frameLayout -l $uiName -collapse 0`;
+    setParent ..;
+    setParent $frame;
+    attrNavigationControlGrp -l "Input Polymesh"
+                             -at ($fullName + ".inputPolymesh");
+    
+    // Represent the input components as text
+    string $comps[] = `getAttr ($fullName + ".ics")`;
+    string $compsStr = `stringArrayToString $comps " "`;
+    string $chngCmd = ("updateComponentList(\"" + $fullName + ".ics\",\"#1\")");
+    textFieldGrp -l "Input Components" -tx $compsStr -cc $chngCmd;
+    
+    // Create the Remove button.  Nicely space it to grow from the right
+    string $row = `rowLayout -nc 2 -adj 2`;
+    text -l " " -w 10 -p $row;
+    button -l ("Remove " + $uiName) -p $row
+           -c ("AEremoveMultiElement(\""+$fullName+"\")");
+    setParent ..;
+    setUITemplate -ppt;
+}
+
+global proc NewInputUpdate(string $name)
+{
+    // Delete the framelayouts
+    setUITemplate -pst attributeEditorTemplate;
+    string $children[] = `columnLayout -q -ca
+                          AEDDConvexHullTemplate_InputVLayout`;
+    for ($child in $children)
+    {
+        if (`objectTypeUI $child` == "frameLayout")
+            deleteUI -lay $child;
+    }
+    
+    // Remove the duplicate elements in the array that show up
+    int $allIndices[] = `getAttr -multiIndices $name`;
+    int $visited[];
+    int $indices[];
+    for ($index in $allIndices)
+    {
+        int $dupe = 0;
+        for ($idx in $visited)
+        {
+            if ($index == $idx)
+            {
+                $dupe = 1;
+                break;
+            }
+        }
+        if (!$dupe)
+        {
+            $visited[`size $visited`] = $index;
+            $indices[`size $indices`] = $index;
+        }
+    }
+    
+    // Make each section
+    for ($i=0; $i < `size $indices`; $i++)
+    {
+        NewInputIndex $name $indices[$i] "AEDDConvexHullTemplate_InputVLayout";
+    }
+    setUITemplate -ppt;
+}
+
+global proc AEDDConvexHullTemplate(string $nodeName)
+{
+    editorTemplate -beginScrollLayout;
+        editorTemplate -beginLayout "Convex Hull Attributes" -collapse 0;
+            editorTemplate -addControl "maxVertices";
+            editorTemplate -addControl "reverseNormals";
+            editorTemplate -addControl "normalEpsilon";
+    
+            // Hide the forceTriangles attribute that doesn't seem
+            // to do anything
+            editorTemplate -suppress "forceTriangles";
+    
+
+            // Skin Width block
+            editorTemplate -addSeparator;
+			editorTemplate -addControl "skinWidth";
+            editorTemplate -addControl "skinWidthEnabled" 
+                                       "AEDDConvexHullTemplate_dimSkinWidth";
+    
+            // Input block
+            //editorTemplate -addControl "input";
+            editorTemplate -callCustom "NewInput" "NewInputUpdate" "input";
+            
+            /*
+            editorTemplate -callCustom "AEDDConvexHullTemplate_InputMeshNew"
+                                       "AEDDConvexHullTemplate_InputMeshRepl"
+                                       "inputPolymesh";
+            editorTemplate -callCustom "AEDDConvexHullTemplate_InputCompsNew"
+                                       "AEDDConvexHullTemplate_InputCompsRepl"
+                                       "inputComponents";
+            */
+            
+		editorTemplate -endLayout;
+	
+		// include/call base class/node attributes
+		AEdependNodeTemplate $nodeName;
+
+        editorTemplate -addExtraControls;
+	editorTemplate -endScrollLayout;
+}

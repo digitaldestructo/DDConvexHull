@@ -112,7 +112,7 @@ MStatus DDConvexHullNode::initialize()
     
     // Normal Epsilon
     MFnNumericAttribute normalEpsilonAttrFn;
-    normalEpsilonAttr = normalEpsilonAttrFn.create("normalEpisilon", "ep",
+    normalEpsilonAttr = normalEpsilonAttrFn.create("normalEpsilon", "ep",
                                                    MFnNumericData::kDouble,
                                                    .001f, &stat);
     normalEpsilonAttrFn.setWritable(true);
