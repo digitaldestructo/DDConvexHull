@@ -1,5 +1,32 @@
+//
+//  AEDDConvexHullTemplate.mel
+//  DDConvexHull
+//
+//  Created by Jonathan Tilden on 1/1/13.
+//  Copyright (c) 2013 Jonathan Tilden. All rights reserved.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is 
+// furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 source AEnewNonNumericMulti.mel;
 
+// Callback when the user changes text for the input components in the
+// attribute edtior
 global proc AEDDConvexHullTemplate_updateComps(string $attr, string $value)
 {
     string $buffer[];
@@ -12,13 +39,18 @@ global proc AEDDConvexHullTemplate_updateComps(string $attr, string $value)
     evalEcho($cmd);
 }
 
-global proc AEDDConvexHullTemplate_updateCompsScriptJob(string $attr, string $textBox)
+// Callback for the scriptJob that runs any time the inputComponents 
+// attribute changes while the attribute edtior has focust
+global proc AEDDConvexHullTemplate_updateCompsScriptJob(string $attr, 
+                                                        string $textBox)
 {
     string $comps[] = `getAttr $attr`;
     string $compsStr = `stringArrayToString $comps " "`;
     textFieldGrp -e -tx $compsStr $textBox; 
 }
 
+// Callback for when the add selected button is press in the
+// attribute editor.  Calls method in DDConvexHullUtils.py
 global proc AEDDConvexHullTemplate_addSelected(string $nodeName)
 {
     string $buffer[];
@@ -28,12 +60,15 @@ global proc AEDDConvexHullTemplate_addSelected(string $nodeName)
     python($python);
 }
 
+// When skin width is not enabled, disable the skin width attribute
+// control widget
 global proc AEDDConvexHullTemplate_dimSkinWidth(string $nodeName)
 {
     int $skinWidthEnabled = `getAttr ($nodeName + ".skinWidthEnabled")`;
     editorTemplate -dimControl $nodeName "skinWidth" (!$skinWidthEnabled);
 }
 
+// Creates a brand new AE Block for the Compound Array Input attribute
 global proc AEDDConvexHullTemplate_InputNew(string $name)
 {
     setUITemplate -pst attributeEditorTemplate;
@@ -58,6 +93,9 @@ global proc AEDDConvexHullTemplate_InputNew(string $name)
     AEDDConvexHullTemplate_InputRepl $name;
 }
 
+// Creates a new section for the specified input index of the Hull
+// Each section displays a custom widget showing the connected mesh,
+// as well as a text field for displaying the active components
 proc newInputIndex(string $name, int $index, string $parent)
 {
     setUITemplate -pst attributeEditorTemplate;
@@ -95,6 +133,8 @@ proc newInputIndex(string $name, int $index, string $parent)
     setUITemplate -ppt;
 }
 
+// Updates the Input block of the AE Template.  Note that every time,
+// each compound index attribute is destroyed, then recreated.
 global proc AEDDConvexHullTemplate_InputRepl(string $name)
 {
     // Delete the framelayouts
@@ -137,6 +177,7 @@ global proc AEDDConvexHullTemplate_InputRepl(string $name)
     setUITemplate -ppt;
 }
 
+// Main entry point for the AE Template
 global proc AEDDConvexHullTemplate(string $nodeName)
 {
     editorTemplate -beginScrollLayout;
