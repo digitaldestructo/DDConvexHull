@@ -1,3 +1,19 @@
+# Visual Studio files that shouldn't be submitted
+*.suo
+*.sdf
+*.proj.user
+*.vcxproj.user
+*.pdb
+*.ilk
+*.lastbuildstate
+*.exp
+*.tlog
+*.intermediate.manifest
+*.log
+*.ipch
+*.
+
+
 # Python .pyc and .pyo
 *.pyc
 *.pyo
