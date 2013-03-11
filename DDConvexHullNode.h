@@ -41,8 +41,15 @@ public:
     static MObject useTrianglesAttr;
     static MObject maxOutputVerticesAttr;
     static MObject useReverseTriOrderAttr;
+    static MObject inputAttr;
+    static MObject inputComponentsAttr;
     static MObject inputPolymeshAttr;
     static MObject outputPolymeshAttr;
+
+private:
+    MStatus processInputIndex(MPointArray &allPoints,
+                              MDataHandle &meshHndl,
+                              MDataHandle &compHndl);
 };
 
 

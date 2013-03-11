@@ -1,0 +1,212 @@
+//
+//  AEDDConvexHullTemplate.mel
+//  DDConvexHull
+//
+//  Created by Jonathan Tilden on 1/1/13.
+//  Copyright (c) 2013 Jonathan Tilden. All rights reserved.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is 
+// furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+source AEnewNonNumericMulti.mel;
+
+// Callback when the user changes text for the input components in the
+// attribute edtior
+global proc AEDDConvexHullTemplate_updateComps(string $attr, string $value)
+{
+    string $buffer[];
+    tokenize $value " " $buffer;
+    print (`size $buffer` + "\n");
+    print $buffer;
+    $value = ("\"" + `stringArrayToString $buffer "\" \""` + "\"");
+    string $cmd = ("setAttr " + $attr + " -type componentList " +
+                   `size $buffer` + " " + $value);
+    evalEcho($cmd);
+}
+
+// Callback for the scriptJob that runs any time the inputComponents 
+// attribute changes while the attribute edtior has focust
+global proc AEDDConvexHullTemplate_updateCompsScriptJob(string $attr, 
+                                                        string $textBox)
+{
+    string $comps[] = `getAttr $attr`;
+    string $compsStr = `stringArrayToString $comps " "`;
+    textFieldGrp -e -tx $compsStr $textBox; 
+}
+
+// Callback for when the add selected button is press in the
+// attribute editor.  Calls method in DDConvexHullUtils.py
+global proc AEDDConvexHullTemplate_addSelected(string $nodeName)
+{
+    string $buffer[];
+    tokenize $nodeName "." $buffer;
+    string $python = "import DDConvexHullUtils;";
+    $python += ("DDConvexHullUtils.addObjects('" + $buffer[0] + "')");
+    python($python);
+}
+
+// When skin width is not enabled, disable the skin width attribute
+// control widget
+global proc AEDDConvexHullTemplate_dimSkinWidth(string $nodeName)
+{
+    int $skinWidthEnabled = `getAttr ($nodeName + ".skinWidthEnabled")`;
+    editorTemplate -dimControl $nodeName "skinWidth" (!$skinWidthEnabled);
+}
+
+// Creates a brand new AE Block for the Compound Array Input attribute
+global proc AEDDConvexHullTemplate_InputNew(string $name)
+{
+    setUITemplate -pst attributeEditorTemplate;
+    frameLayout -l "Convex Hull Inputs" AEDDConvexHullTemplate_InputFrame;
+    
+    setParent AEDDConvexHullTemplate_InputFrame;
+    columnLayout -adj 1 -rs 3 AEDDConvexHullTemplate_InputVLayout;
+    setParent ..;
+    
+    setParent AEDDConvexHullTemplate_InputVLayout;
+    string $buffer[];
+    tokenize $name "." $buffer;
+    string $remCmd = ("AEnewNonNumericMultiAddNewItem(\"" +
+                          $buffer[0] + "\",\"" + $buffer[1] + "\")");
+    string $addCmd = ("AEDDConvexHullTemplate_addSelected(\"" + $name + "\")");
+    string $selBtn = `button -l "Add Selected" -c $addCmd`;
+    string $newBtn = `button -l "Add New Item" -c $remCmd`;
+    setParent ..;
+    
+    setUITemplate -ppt;
+    
+    AEDDConvexHullTemplate_InputRepl $name;
+}
+
+// Creates a new section for the specified input index of the Hull
+// Each section displays a custom widget showing the connected mesh,
+// as well as a text field for displaying the active components
+proc newInputIndex(string $name, int $index, string $parent)
+{
+    setUITemplate -pst attributeEditorTemplate;
+    setParent $parent;
+    
+    string $fullName = ($name + "[" + $index + "]");
+    string $uiName = "input[" + $index + "]";
+    string $frame = `frameLayout -l $uiName -collapse 0`;
+    setParent ..;
+    setParent $frame;
+    attrNavigationControlGrp -l "Input Polymesh"
+                             -at ($fullName + ".inputPolymesh");
+    
+    // Represent the input components as text
+    string $comps[] = `getAttr ($fullName + ".ics")`;
+    string $compsStr = `stringArrayToString $comps " "`;
+    string $chngCmd = ("AEDDConvexHullTemplate_updateComps(\"" +
+                                                  $fullName + ".ics\",\"#1\")");
+    string $textBox = `textFieldGrp -l "Input Components" 
+                                    -tx $compsStr -cc $chngCmd`;
+    
+    // Create a script job parented to the text box to update
+    // when the attribute changes
+    string $sjCmd = ("AEDDConvexHullTemplate_updateCompsScriptJob" + 
+                     "(\"" + ($fullName + ".ics") + "\",\"" + $textBox + "\")");
+    print(`scriptJob -p $textBox -ac ($fullName + ".ics") $sjCmd`);
+    print("\n");
+    
+    // Create the Remove button.  Nicely space it to grow from the right
+    string $row = `rowLayout -nc 2 -adj 2`;
+    text -l " " -w 10 -p $row;
+    button -l ("Remove " + $uiName) -p $row
+           -c ("AEremoveMultiElement(\""+$fullName+"\")");
+    setParent ..;
+    setUITemplate -ppt;
+}
+
+// Updates the Input block of the AE Template.  Note that every time,
+// each compound index attribute is destroyed, then recreated.
+global proc AEDDConvexHullTemplate_InputRepl(string $name)
+{
+    // Delete the framelayouts
+    setUITemplate -pst attributeEditorTemplate;
+    string $children[] = `columnLayout -q -ca
+                          AEDDConvexHullTemplate_InputVLayout`;
+    for ($child in $children)
+    {
+        if (`objectTypeUI $child` == "frameLayout")
+            deleteUI -lay $child;
+    }
+    
+    // Remove the duplicate elements in the array that show up
+    int $allIndices[] = `getAttr -multiIndices $name`;
+    int $visited[];
+    int $indices[];
+    for ($index in $allIndices)
+    {
+        int $dupe = 0;
+        for ($idx in $visited)
+        {
+            if ($index == $idx)
+            {
+                $dupe = 1;
+                break;
+            }
+        }
+        if (!$dupe)
+        {
+            $visited[`size $visited`] = $index;
+            $indices[`size $indices`] = $index;
+        }
+    }
+    
+    // Make each section
+    for ($i=0; $i < `size $indices`; $i++)
+    {
+        newInputIndex $name $indices[$i] "AEDDConvexHullTemplate_InputVLayout";
+    }
+    setUITemplate -ppt;
+}
+
+// Main entry point for the AE Template
+global proc AEDDConvexHullTemplate(string $nodeName)
+{
+    editorTemplate -beginScrollLayout;
+        editorTemplate -beginLayout "Convex Hull Attributes" -collapse 0;
+            editorTemplate -addControl "maxVertices";
+            editorTemplate -addControl "reverseNormals";
+            editorTemplate -addControl "normalEpsilon";
+    
+            // Hide the forceTriangles attribute that doesn't seem
+            // to do anything
+            editorTemplate -suppress "forceTriangles";
+    
+
+            // Skin Width block
+            editorTemplate -addSeparator;
+			editorTemplate -addControl "skinWidth";
+            editorTemplate -addControl "skinWidthEnabled" 
+                                       "AEDDConvexHullTemplate_dimSkinWidth";
+    
+            // Input block
+            editorTemplate -callCustom "AEDDConvexHullTemplate_InputNew"
+                                       "AEDDConvexHullTemplate_InputRepl"
+                                       "input";
+
+		editorTemplate -endLayout;
+	
+		// include/call base class/node attributes
+		AEdependNodeTemplate $nodeName;
+
+        editorTemplate -addExtraControls;
+	editorTemplate -endScrollLayout;
+}
