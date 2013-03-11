@@ -11,7 +11,17 @@
 *.intermediate.manifest
 *.log
 *.ipch
-*.
+
+*.cache
+*.idb
+*.opensdf
+
+# Ignore for this project as its a DLL, not a static lib
+*.lib		
+
+# Whitelist .obj model files
+*.obj
+!Models/*.obj
 
 
 # Python .pyc and .pyo
