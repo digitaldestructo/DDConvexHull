@@ -17,7 +17,7 @@ MStatus initializePlugin(MObject obj)
                         DDConvexHullNode::id,
                         DDConvexHullNode::creator,
                         DDConvexHullNode::initialize);
-    plugin.registerCommand("DDConvexHull", DDConvexHullCmd::creator);
+    //plugin.registerCommand("DDConvexHull", DDConvexHullCmd::creator);
     return MS::kSuccess;
 }
 
@@ -25,6 +25,6 @@ MStatus uninitializePlugin( MObject obj )
 {
     MFnPlugin plugin( obj );
     plugin.deregisterNode(DDConvexHullNode::id);
-    plugin.deregisterCommand("DDConvexHull");
+    //plugin.deregisterCommand("DDConvexHull");
     return MS::kSuccess;
 }
