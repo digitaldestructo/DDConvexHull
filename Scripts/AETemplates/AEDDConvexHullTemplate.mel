@@ -12,12 +12,18 @@ global proc AEDDConvexHullTemplate_updateComps(string $attr, string $value)
     evalEcho($cmd);
 }
 
+global proc AEDDConvexHullTemplate_updateCompsScriptJob(string $attr, string $textBox)
+{
+    string $comps[] = `getAttr $attr`;
+    string $compsStr = `stringArrayToString $comps " "`;
+    textFieldGrp -e -tx $compsStr $textBox; 
+}
+
 global proc AEDDConvexHullTemplate_addSelected(string $nodeName)
 {
     string $buffer[];
     tokenize $nodeName "." $buffer;
     string $python = "import DDConvexHullUtils;";
-    print ($python + "\n");
     $python += ("DDConvexHullUtils.addObjects('" + $buffer[0] + "')");
     python($python);
 }
@@ -43,7 +49,7 @@ global proc AEDDConvexHullTemplate_InputNew(string $name)
     string $remCmd = ("AEnewNonNumericMultiAddNewItem(\"" +
                           $buffer[0] + "\",\"" + $buffer[1] + "\")");
     string $addCmd = ("AEDDConvexHullTemplate_addSelected(\"" + $name + "\")");
-    string $selBtn = `button -l "Add Selected" -c $addCmd;
+    string $selBtn = `button -l "Add Selected" -c $addCmd`;
     string $newBtn = `button -l "Add New Item" -c $remCmd`;
     setParent ..;
     
@@ -70,7 +76,15 @@ proc newInputIndex(string $name, int $index, string $parent)
     string $compsStr = `stringArrayToString $comps " "`;
     string $chngCmd = ("AEDDConvexHullTemplate_updateComps(\"" +
                                                   $fullName + ".ics\",\"#1\")");
-    textFieldGrp -l "Input Components" -tx $compsStr -cc $chngCmd;
+    string $textBox = `textFieldGrp -l "Input Components" 
+                                    -tx $compsStr -cc $chngCmd`;
+    
+    // Create a script job parented to the text box to update
+    // when the attribute changes
+    string $sjCmd = ("AEDDConvexHullTemplate_updateCompsScriptJob" + 
+                     "(\"" + ($fullName + ".ics") + "\",\"" + $textBox + "\")");
+    print(`scriptJob -p $textBox -ac ($fullName + ".ics") $sjCmd`);
+    print("\n");
     
     // Create the Remove button.  Nicely space it to grow from the right
     string $row = `rowLayout -nc 2 -adj 2`;
@@ -118,7 +132,7 @@ global proc AEDDConvexHullTemplate_InputRepl(string $name)
     // Make each section
     for ($i=0; $i < `size $indices`; $i++)
     {
-        NewInputIndex $name $indices[$i] "AEDDConvexHullTemplate_InputVLayout";
+        newInputIndex $name $indices[$i] "AEDDConvexHullTemplate_InputVLayout";
     }
     setUITemplate -ppt;
 }
@@ -143,7 +157,6 @@ global proc AEDDConvexHullTemplate(string $nodeName)
                                        "AEDDConvexHullTemplate_dimSkinWidth";
     
             // Input block
-            //editorTemplate -addControl "input";
             editorTemplate -callCustom "AEDDConvexHullTemplate_InputNew"
                                        "AEDDConvexHullTemplate_InputRepl"
                                        "input";

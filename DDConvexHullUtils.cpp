@@ -197,7 +197,7 @@ MStatus DDConvexHullUtils::componentToVertexIDs(MIntArray &outIndices,
             outIndices.append(edgeVerts[1]);
         }
     }
-    else if (compType == MFn::kMeshEdgeComponent)
+    else if (compType == MFn::kMeshPolygonComponent)
     {
         for (uint i=0; i < elemLen; i++)
         {

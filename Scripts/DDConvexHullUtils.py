@@ -65,7 +65,10 @@ def _getFirstEmptyInputIndex(convexHullNode, limit=32):
     The limit flag simply specifies when to stop checking for an empty index
     and return -1.
     """
-    indices = set(cmds.getAttr('%s.input' % convexHullNode, multiIndices=True))
+    multiIndices = cmds.getAttr('%s.input' % convexHullNode, multiIndices=True)
+    if multiIndices is None:
+        return 0
+    indices = set(multiIndices)
     for idx in xrange(0, limit):
         if not idx in indices:
             return idx
@@ -104,7 +107,7 @@ def _optimizeComponentList(mesh, componentList):
         newComps = cmds.polyListComponentConversion(edges, te=True)
         if newComps is not None:
             newCompList.extend(newComps)
-    return newCompList
+    return [x.split('.')[-1] for x in newCompList]
 
 
 def setComponents(componentList, convexHullNode, index,
@@ -132,10 +135,12 @@ def setComponents(componentList, convexHullNode, index,
             mel.eval('warning "Unable to determine connected to ' \
                      '%s.inputPolymesh' % inputAttr)
         else:
-            componentList = _optimizeComponentList(mesh, componentList)
+            meshName, plug = _splitattr(mesh)
+            componentList = _optimizeComponentList(meshName, componentList)
 
     # Flatten the list to a space-delimited string
     numComponents = len(componentList)
+    print componentList
     cmds.setAttr('%s.ics' % inputAttr,
                  numComponents, type='componentList', *componentList)
 
@@ -151,8 +156,7 @@ def getConnectedMeshes(convexHullNode, reverseMapping=False):
     inputAttr = '%s.input' % convexHullNode
     connections = cmds.listConnections(inputAttr, sh=True, p=True,
                                                   type='mesh', c=True)
-    if connections is None and not len(connections):
-        mel.eval('warning "No connections found to %s"' % inputAttr)
+    if connections is None or not len(connections):
         return {}
 
     # The convex node is always on the left, connection on right.
@@ -179,7 +183,7 @@ def connectMesh(convexHullNode, meshNode, componentList=[]):
     """
     # Find the first empty index
     idx = _getFirstEmptyInputIndex(convexHullNode)
-    cmds.connectAttr(('%s.outMesh' % meshNode),
+    cmds.connectAttr(('%s.worldMesh' % meshNode),
                      ('%s.input[%d].inputPolymesh' % (convexHullNode,idx)),
                      force=True)
 

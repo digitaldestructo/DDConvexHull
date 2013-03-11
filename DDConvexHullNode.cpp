@@ -185,7 +185,7 @@ MStatus DDConvexHullNode::processInputIndex(MPointArray &allPoints,
                                             MDataHandle &meshHndl,
                                             MDataHandle &compHndl)
 {
-    MObject curMesh = meshHndl.asMesh();
+    MObject curMesh = meshHndl.asMeshTransformed();
     MObject curComps = compHndl.data();
     
     // Need a mesh plug for comps to work
@@ -311,7 +311,8 @@ MStatus DDConvexHullNode::compute(const MPlug &plug, MDataBlock &data)
         }
         
         // Ensure we have verts.  If not, display a warning, and return success
-        if (allPoints.length() < 8)
+		uint pointCount = allPoints.length();
+        if (pointCount < 8)
         {
             MGlobal::displayError("At least 8 unique points are required " \
                                   "to compute the hull.");
