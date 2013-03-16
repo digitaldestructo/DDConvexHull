@@ -254,3 +254,55 @@ def addObjects(convexHullNode, objects=[]):
                           convexHullNode, connectedMeshes[mesh][0])
         else:
             connectMesh(convexHullNode, mesh, compMap[mesh]['components'])
+
+def createHull(hullname='', meshname='', objects=[], createTransform=True,
+               parent=None):
+    """
+    Creates a new hull and output mesh with the specified connected objects.
+    If no objects are specified, the user's selection is used.  If
+    createTransform is True, then the meshname will be the name of the transform
+    and the mesh will have 'shape' appended to the end.
+
+    Returns a tuple in the form of (hullNode, meshNode, xformNode)
+    """
+    selection = cmds.ls(sl=True, l=True)
+
+    hullargs = {}
+    if hullname != '':
+        hullargs['n'] = hullname
+    hullNode = cmds.createNode('DDConvexHull', **hullargs)
+
+    # Create a transform if specified.  If so, set the mesh name to the
+    # name of the transform
+    xformNode = None
+    if createTransform:
+        xformArgs  = {}
+        if meshname == '':
+            meshname = 'polySurface#'
+        xformArgs['n'] = meshname
+        if parent is not None:
+            xformArgs['p'] = parent
+        xformNode = cmds.createNode('transform', **xformArgs)
+
+    meshargs = {}
+    if meshname != '':
+        meshargs['n'] = meshname
+    if createTransform and xformNode is not None:
+        meshargs['n'] = '%sShape' % xformNode
+        meshargs['p'] = xformNode
+    elif parent is not None:
+        meshargs['p'] = parent
+    meshNode = cmds.createNode('mesh', **meshargs)
+
+    # Connect the nodes
+    cmds.connectAttr('%s.output' % hullNode, '%s.inMesh' % meshNode)
+
+    # If there are no objects specified, and no selection, handle it here
+    # so it doesn't create an exception when passed to addObjects
+    if not len(objects) and (selection is None or not len(selection)):
+        mel.eval('warning "No objects specified to add to hull"')
+    else:
+        objects = selection
+        addObjects(hullNode, objects=objects)
+    return (hullNode, meshNode, xformNode)
+
