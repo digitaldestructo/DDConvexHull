@@ -63,6 +63,6 @@ def create_hull():
     if orig_sel:
         setComponents(orig_sel, hullNode)
         
-    # Used by doing a selection of either an object, faces or verts
-    create_hull()
+# Used by doing a selection of either an object, faces or verts
+create_hull()
 ```
